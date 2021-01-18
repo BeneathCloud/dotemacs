@@ -13,5 +13,5 @@
                    (lambda ()
                      (toggle-frame-fullscreen)
                      )))
-  (require 'fullscreen)
-  (fullscreen))
+  (custom-set-variables
+   '(initial-frame-alist (quote ((fullscreen . maximized))))))

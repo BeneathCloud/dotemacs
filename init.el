@@ -79,6 +79,8 @@
 (global-visual-line-mode)
 (electric-pair-mode)
 (blink-cursor-mode -1)
+(delete-selection-mode 1)
+(desktop-save-mode 1)
 ;; indent
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
@@ -126,6 +128,18 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    "M-SPC" 'snails)
+  (general-define-key
+   :states '(normal visual insert emacs)
+   :keymaps 'eyebrowse-mode-map
+   "s-1" 'eyebrowse-switch-to-window-config-1
+   "s-2" 'eyebrowse-switch-to-window-config-2
+   "s-3" 'eyebrowse-switch-to-window-config-3
+   "s-4" 'eyebrowse-switch-to-window-config-4
+   "s-5" 'eyebrowse-switch-to-window-config-5
+   "s-<up>" 'eyebrowse-close-window-config
+   "s-<down>" 'eyebrowse-rename-window-config
+   "s-<left>" 'eyebrowse-prev-window-config
+   "s-<right>" 'eyebrowse-next-window-config)
   )
 
  (use-package evil
@@ -145,9 +159,9 @@
   :config
   (evil-collection-init))
 
- (use-package evil-commentary
-   :config
-   (evil-commentary-mode))
+(use-package evil-commentary
+  :config
+  (evil-commentary-mode))
 
 (use-package evil-surround
   :config
@@ -327,5 +341,14 @@
   (beacon-mode 1))
 
 (use-package eyebrowse
+  :demand t
+  :custom
+  (eyebrowse-wrap-around t)
+  :hook
+  ((eyebrowse-post-window-switch . get-eyebrowse-status)
+   (eyebrowse-post-window-delete . get-eyebrowse-status))
   :config
-  (eyebrowse-mode t))
+  (defun get-eyebrowse-status ()
+    (interactive)
+    (message (eyebrowse-mode-line-indicator)))
+  (eyebrowse-mode))

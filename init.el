@@ -65,8 +65,16 @@
   ;; Splash (optional)
   (unless (member "-no-splash" command-line-args)
   (require 'nano-splash))
-)
-
+  (defun nano-theme-light ()
+    (interactive)
+    (nano-theme-set-light)
+    (nano-faces)
+    (nano-theme))
+  (defun nano-theme-night ()
+    (interactive)
+    (nano-theme-set-dark)
+    (nano-faces)
+    (nano-theme)))
 
 (global-visual-line-mode)
 (electric-pair-mode)
@@ -317,3 +325,7 @@
 (use-package beacon
   :config
   (beacon-mode 1))
+
+(use-package eyebrowse
+  :config
+  (eyebrowse-mode t))

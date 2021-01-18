@@ -42,6 +42,7 @@
    ((member "-default" command-line-args) t)
    ((member "-dark" command-line-args) (require 'nano-theme-dark))
    (t (require 'nano-theme-light)))
+  (require 'nano-theme-dark)
   (require 'nano-layout)
   (require 'nano-base-colors)
   (require 'nano-faces)

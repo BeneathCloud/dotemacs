@@ -1,3 +1,7 @@
+;; Straght.el disable package.el
+(setq package-enable-at-startup nil)
+
+;; Snails.el workaround on MacOS
 (if (featurep 'cocoa)
     (progn
       (setq ns-use-native-fullscreen nil)

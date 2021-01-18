@@ -80,7 +80,7 @@
 (electric-pair-mode)
 (blink-cursor-mode -1)
 (delete-selection-mode 1)
-(desktop-save-mode 1)
+;; (desktop-save-mode 1)
 ;; indent
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
@@ -172,26 +172,14 @@
   ("C-;" . avy-goto-char-2))
 
 (use-package selectrum
-  ;; :disabled t
   :config
   (selectrum-mode 1))
 
 (use-package selectrum-prescient
-  ;; :disabled t
   :after selectrum
   :config
   (selectrum-prescient-mode 1)
   (prescient-persist-mode 1))
-
-(use-package mini-frame
-  :disabled
-  :config
-  (mini-frame-mode)
-  (custom-set-variables
-   '(mini-frame-show-parameters
-     '((top . 200)
-       (width . 0.7)
-       (left . 0.5)))))
 
 (use-package which-key
   :config
@@ -214,7 +202,6 @@
   (key-chord-mode 1))
 
 (use-package exec-path-from-shell
-  ;; :disabled
   :if (memq window-system '(mac ns))
   :config
   (setq exec-path-from-shell-arguments '("-l"))
@@ -232,16 +219,16 @@
   (setq olivetti-body-width 80))
 
 (use-package lsp-mode
-  :commands lsp
+  :custom
+  (lsp-headerline-breadcrumb-enable nil)
   :hook
   ((java-mode . lsp)
-  (lsp-mode . lsp-enable-which-key-integration)))
+   (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
   :init
   (setq lsp-ui-doc-enable nil)
-  (setq lsp-ui-sideline-enable nil)
-  :config)
+  (setq lsp-ui-sideline-enable nil))
 
 (use-package lsp-java)
 
@@ -287,19 +274,6 @@
   :config
   (add-hook 'haskell-mode-hook #'lsp)
   (add-hook 'haskell-literate-mode-hook #'lsp))
-
-(use-package dante
-  :disabled t
-  :after haskell-mode
-  :commands 'dante-mode
-  :init
-  (add-hook 'haskell-mode-hook 'flycheck-mode)
-  ;; OR for flymake support:
-  ;; (add-hook 'haskell-mode-hook 'flymake-mode)
-  ;; (remove-hook 'flymake-diagnostic-functions 'flymake-proc-legacy-flymake)
-
-  (add-hook 'haskell-mode-hook 'dante-mode)
-  )
 
 ;; !need to install ripgrep command line tool in your system
 (use-package snails

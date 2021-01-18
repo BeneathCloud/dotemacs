@@ -80,7 +80,7 @@
 (electric-pair-mode)
 (blink-cursor-mode -1)
 (delete-selection-mode 1)
-;; (desktop-save-mode 1)
+(desktop-save-mode 1)
 ;; indent
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)

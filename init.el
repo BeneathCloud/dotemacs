@@ -5,6 +5,7 @@
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 
+
 ;; straght.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -233,7 +234,10 @@
   (company-minimum-prefix-length 2)
   (company-idle-delay 0.0))
 
-(use-package vterm)
+(use-package vterm
+  :init
+  (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
+  (setq vterm-kill-buffer-on-exit t))
 
 (use-package paren
   :config

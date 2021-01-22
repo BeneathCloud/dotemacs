@@ -4,6 +4,7 @@
 ;; 1. remove useless packages
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
+;; 3. make edwina work with treemacs
 
 
 ;; straght.el
@@ -24,11 +25,12 @@
 (setq straight-use-package-by-default t)
 
 (use-package nano-layout
- :straight (nano-emacs :type git :host github :repo "rougier/nano-emacs"
-                       :fork (:host github
-                                    :repo "BeneathCloud/nano-emacs")
-                       :no-byte-compile t)
- :demand t
+  ;; :disabled t
+  :straight (nano-emacs :type git :host github :repo "rougier/nano-emacs"
+                        :fork (:host github
+                                     :repo "BeneathCloud/nano-emacs")
+                        :no-byte-compile t)
+  :demand t
   :init
   ;; Theming Command line options (this will cancel warning messages)
   (add-to-list 'command-switch-alist '("-dark"   . (lambda (args))))
@@ -37,7 +39,7 @@
   (add-to-list 'command-switch-alist '("-no-splash" . (lambda (args))))
   (add-to-list 'command-switch-alist '("-no-help" . (lambda (args))))
   (add-to-list 'command-switch-alist '("-compact" . (lambda (args))))
- :config
+  :config
   (cond
    ((member "-default" command-line-args) t)
    ((member "-dark" command-line-args) (require 'nano-theme-dark))
@@ -54,7 +56,7 @@
   ;; Nano header & mode lines (optional)
   (require 'nano-modeline)
   ;; Nano key bindings modification (optional)
-  (require 'nano-bindings)
+  ;; (require 'nano-bindings)
   ;; Compact layout (need to be loaded after nano-modeline)
   (when (member "-compact" command-line-args)
     (require 'nano-compact))
@@ -64,7 +66,7 @@
     (message (format "Initialization time: %s" (emacs-init-time))))
   ;; Splash (optional)
   (unless (member "-no-splash" command-line-args)
-  (require 'nano-splash))
+    (require 'nano-splash))
   (defun nano-theme-light ()
     (interactive)
     (nano-theme-set-light)
@@ -79,14 +81,19 @@
 (global-visual-line-mode)
 (electric-pair-mode)
 (blink-cursor-mode -1)
-(delete-selection-mode 1)
-(desktop-save-mode 1)
+(delete-selection-mode nil)
+;; (desktop-save-mode nil)
 (setq ring-bell-function 'ignore)
+;; (setq confirm-kill-processes nil)
 ;; indent
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 (setq indent-line-function 'insert-tab)
-
+(setq mac-option-key-is-meta t
+      mac-command-key-is-meta nil
+      mac-command-modifier　'super
+      mac-option-modifier 'meta
+      mac-use-title-bar nil)
 
 (use-package general
   :after evil
@@ -96,6 +103,20 @@
    :keymaps 'evil-insert-state-map
    (general-chord "jk") 'evil-normal-state
    (general-chord "kj") 'evil-normal-state)
+  (general-define-key
+   :states '(normal visual insert emacs)
+   :keymaps 'override
+   "s-a" 'mark-whole-buffer
+   "s-v" 'yank
+   "s-c" 'kill-ring-save
+   "s-s" 'save-buffer
+   "s-w" 'delete-window
+   "s-z" 'evil-undo
+   "s-Z" 'evil-redo
+   "s-q" 'save-buffers-kill-terminal
+   "s-=" 'text-scale-increase
+   "s--" 'text-scale-decrease
+   "s-0" 'text-scale-set)
   (general-define-key
    :prefix "SPC"
    :states '(normal visual)
@@ -142,6 +163,7 @@
    "s-<left>" 'eyebrowse-prev-window-config
    "s-<right>" 'eyebrowse-next-window-config)
   )
+
 
  (use-package evil
    :init
@@ -246,6 +268,7 @@
   (company-idle-delay 0.0))
 
 (use-package vterm
+  ;; :disabled t
   :init
   (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
   (setq vterm-kill-buffer-on-exit t))
@@ -268,16 +291,18 @@
 (use-package sml-mode)
 
 (use-package haskell-mode
-  :config
-  (electric-pair-local-mode -1))
+ :config
+ (electric-pair-local-mode -1))
 
 (use-package lsp-haskell
-  :config
-  (add-hook 'haskell-mode-hook #'lsp)
-  (add-hook 'haskell-literate-mode-hook #'lsp))
+  ;; :disabled t
+ :config
+ (add-hook 'haskell-mode-hook #'lsp)
+ (add-hook 'haskell-literate-mode-hook #'lsp))
 
 ;; !need to install ripgrep command line tool in your system
 (use-package snails
+  ;; :disabled t
   :straight (snails :type git :host github :repo "manateelazycat/snails" :no-byte-compile t)
   :config
   (add-to-list 'evil-emacs-state-modes 'snails-mode)
@@ -306,6 +331,7 @@
     (fuz-build-and-load-dymod)))
 
 (use-package edwina
+  ;; :disabled t
   :config
   (setq display-buffer-base-action '(display-buffer-below-selected))
   (edwina-setup-dwm-keys 'super)
@@ -317,6 +343,7 @@
 
 (use-package eyebrowse
   :demand t
+  ;; :disabled t
   :custom
   (eyebrowse-wrap-around t)
   :hook
@@ -327,3 +354,38 @@
     (interactive)
     (message (eyebrowse-mode-line-indicator)))
   (eyebrowse-mode))
+
+(use-package dired+
+  :disabled t)
+
+(use-package yaml-mode
+  :mode ("\\.yaml\\'" "\\.yml\\'"))
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(mac-command-modifier 'super))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+
+(use-package all-the-icons)
+
+(use-package treemacs
+  :demand t
+  ;; :disabled t
+  )
+
+(use-package treemacs-icons-dired
+  :demand t
+  :after treemacs dired
+  :config (treemacs-icons-dired-mode))
+
+(use-package perspective
+  :disabled t
+  :config
+  (persp-mode))

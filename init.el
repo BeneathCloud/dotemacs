@@ -111,6 +111,7 @@
    "s-c" 'kill-ring-save
    "s-s" 'save-buffer
    "s-w" 'delete-window
+   "s-W" 'kill-current-buffer
    "s-z" 'evil-undo
    "s-Z" 'evil-redo
    "s-q" 'save-buffers-kill-terminal
@@ -150,6 +151,12 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    "M-SPC" 'snails)
+  (general-define-key
+   :states '(emacs)
+   :keymaps 'snails-mode-map
+   "C-j" 'snails-select-next-backend
+   "C-k" 'snails-select-prev-backend
+)
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'eyebrowse-mode-map
@@ -320,8 +327,9 @@
          ("?"
           '(snails-backend-mdfind snails-backend-projectile snails-backend-fd snails-backend-everything))))
   (setq snails-default-backends
-        '(snails-backend-buffer snails-backend-recentf snails-backend-directory-files)))
-
+        '(snails-backend-buffer
+          snails-backend-recentf
+          snails-backend-projectile)))
 ;; fuzzy search dependency for Snails
 ;; !needs to install Rust on your system
 (use-package fuz
@@ -376,12 +384,12 @@
 (use-package all-the-icons)
 
 (use-package treemacs
-  :demand t
-  ;; :disabled t
+  ;; :demand t
+  :disabled t
   )
 
 (use-package treemacs-icons-dired
-  :demand t
+  :disabled t
   :after treemacs dired
   :config (treemacs-icons-dired-mode))
 
@@ -389,3 +397,28 @@
   :disabled t
   :config
   (persp-mode))
+
+(use-package ranger
+  :init
+  (ranger-override-dired-mode t)
+  (setq ranger-parent-depth 0)
+  (setq ranger-show-hidden t)
+  )
+
+(use-package all-the-icons-dired
+  :hook
+  ((dired-mode . all-the-icons-dired-mode)
+   (deer-mode . all-the-icons-dired-mode)))
+
+(use-package projectile
+  :init
+  (setq projectile-auto-discover nil)
+  (setq projectile-project-root-functions
+        '(projectile-root-local
+          projectile-root-top-down
+          projectile-root-bottom-up
+          projectile-root-top-down-recurring
+          ))
+  :config
+  (projectile-mode +1)
+  (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))

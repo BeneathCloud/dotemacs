@@ -122,6 +122,10 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "g" 'magit
+   "pp" 'projectile-switch-project
+   "pd" 'projectile-remove-known-project
+   "pa" 'projectile-add-known-project
    "f" 'find-file
    "s" 'save-buffer
    "r" 'recentf-open-files+

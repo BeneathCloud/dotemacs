@@ -122,6 +122,7 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "x" 'execute-extended-command
    "g" 'magit
    "pp" 'projectile-switch-project
    "pd" 'projectile-remove-known-project
@@ -174,7 +175,6 @@
    "s-<left>" 'eyebrowse-prev-window-config
    "s-<right>" 'eyebrowse-next-window-config)
   )
-
 
  (use-package evil
    :init
@@ -262,7 +262,11 @@
 (use-package lsp-ui
   :init
   (setq lsp-ui-doc-enable nil)
-  (setq lsp-ui-sideline-enable nil))
+  ;; (setq lsp-ui-show-hover t)
+  (setq lsp-ui-sideline-show-diagnostics t
+        lsp-ui-sideline-show-hover nil
+        lsp-ui-sideline-show-code-actions nil)
+  )
 
 (use-package lsp-java)
 
@@ -426,3 +430,37 @@
   :config
   (projectile-mode +1)
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
+
+(use-package mini-frame
+  :config
+  (setq mini-frame-resize t)
+  ;; (setq mini-frame-internal-border-color nano-color-subtle)
+  (mini-frame-mode +1)
+  (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
+  (custom-set-variables
+ `(mini-frame-show-parameters
+   `((top . 0.2)
+     (width . 0.6)
+     (left . 0.5)
+     (background-color . ,nano-color-background)
+     ;; (background-color . ,nano-color-subtle) 
+     ;; (foreground-color . "#D08770")
+     ;; (border-color . "#677691")
+     ;; (height . 16)
+     )))
+  ;; workaround for not showing candidates if no typed characters, should be fixed in Emacs 27.2
+  (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
+  (cl-letf* ((orig (symbol-function #'window-text-pixel-size))
+             ((symbol-function #'window-text-pixel-size)
+              (lambda (win from to &rest args)
+                (apply orig
+                       (append (list win from 
+                                     (if (and (window-minibuffer-p win)
+                                              (frame-root-window-p win)
+                                              (eq t to))
+                                         nil
+                                       to))
+                               args)))))
+    (apply f args))))
+
+(use-package consult)

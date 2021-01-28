@@ -156,14 +156,14 @@
   ;; for other
   (general-define-key
    :states '(normal visual insert emacs)
-   :keymaps 'override
+   :keymaps 'global
    "C-a" 'beginning-of-visual-line
    "C-e" 'end-of-visual-line
    )
 
   (general-define-key
    :states '(insert emacs)
-   :keymaps 'override
+   :keymaps 'global
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
@@ -281,7 +281,7 @@
   :init
   (setq lsp-ui-doc-enable nil)
   ;; (setq lsp-ui-show-hover t)
-  (setq lsp-ui-sideline-show-diagnostics t
+  (setq lsp-ui-sideline-show-diagnostics nil
         lsp-ui-sideline-show-hover nil
         lsp-ui-sideline-show-code-actions nil)
   )

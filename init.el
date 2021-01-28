@@ -106,14 +106,15 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
+   "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
    "s-v" 'yank
    "s-c" 'kill-ring-save
    "s-s" 'save-buffer
    "s-w" 'delete-window
    "s-W" 'kill-current-buffer
-   "s-z" 'evil-undo
-   "s-Z" 'evil-redo
+   "s-z" 'undo-fu-only-undo
+   "s-Z" 'undo-fu-only-redo
    "s-q" 'save-buffers-kill-terminal
    "s-=" 'text-scale-increase
    "s--" 'text-scale-decrease
@@ -122,18 +123,35 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "'s" 'consult-register-store
+   "'l" 'consult-register-load
+   "''" 'consult-register
+   "e" 'consult-flycheck
+   "E" 'flycheck-list-errors
+   "k" 'consult-focus-lines
+   "K" 'consult-focus-lines-quit
+   "a" 'iedit-mode
+   "s" 'consult-isearch
+   "L" 'consult-ripgrep
+   "l" 'consult-line
+   "o" 'consult-outline
+   "i" 'consult-imenu
+   "I" 'lsp-ui-imenu
+   "SPC" 'projectile-find-file
    "x" 'execute-extended-command
    "g" 'magit
    "pp" 'projectile-switch-project
    "pd" 'projectile-remove-known-project
    "pa" 'projectile-add-known-project
+   "pf" 'projectile-find-file
    "f" 'find-file
-   "s" 'save-buffer
-   "r" 'recentf-open-files+
+   ;; "s" 'save-buffer
+   "r" 'consult-recent-file
    "d" 'dired
+   "D" 'ranger
    "b" 'switch-to-buffer
    "S" 'im/search-rg+
-   "o" 'olivetti-mode
+   "O" 'olivetti-mode
    "`" (lambda () (interactive) (switch-to-buffer (other-buffer (current-buffer) 1))))
   ;; for other
   (general-define-key
@@ -155,7 +173,7 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
-   "M-SPC" 'snails)
+   "M-SPC" 'consult-buffer)
   (general-define-key
    :states '(emacs)
    :keymaps 'snails-mode-map
@@ -178,7 +196,7 @@
 
  (use-package evil
    :init
-   (setq evil-undo-system 'undo-redo)
+   (setq evil-undo-system 'undo-fu)
    (setq evil-want-keybinding nil)
    (setq evil-want-C-u-scroll t)
    :config
@@ -463,4 +481,86 @@
                                args)))))
     (apply f args))))
 
-(use-package consult)
+(use-package consult
+  :init
+  (defun consult-focus-lines-quit ()
+    (interactive)
+    (consult-focus-lines -1))
+  :bind
+  ("M-'" . consult-register-store)
+  :config
+  (setq consult-project-root-function #'projectile-project-root)
+  (defun find-fd (&optional dir initial)
+    (interactive "P")
+    (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
+      (consult-find dir initial))))
+
+(use-package marginalia
+  :bind (:map minibuffer-local-map
+              ("C-M-a" . marginalia-cycle)
+         ;; When using the Embark package, you can bind `marginalia-cycle' as an Embark action!
+         ;;:map embark-general-map
+         ;;     ("A" . marginalia-cycle)
+        )
+
+  ;; The :init configuration is always executed (Not lazy!)
+  :init
+
+  ;; Must be in the :init section of use-package such that the mode gets
+  ;; enabled right away. Note that this forces loading the package.
+  (marginalia-mode)
+
+  ;; When using Selectrum, ensure that Selectrum is refreshed when cycling annotations.
+  (advice-add #'marginalia-cycle :after
+              (lambda () (when (bound-and-true-p selectrum-mode) (selectrum-exhibit))))
+
+  ;; Prefer richer, more heavy, annotations over the lighter default variant.
+  ;; E.g. M-x will show the documentation string additional to the keybinding.
+  ;; By default only the keybinding is shown as annotation.
+  ;; Note that there is the command `marginalia-cycle' to
+  ;; switch between the annotators.
+  ;; (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
+)
+
+(use-package embark
+  :ensure t
+  :bind
+  ("C-S-a" . embark-act))             
+
+;; Consult users will also want the embark-consult package.
+(use-package embark-consult
+  :ensure t
+  :after (embark consult)
+  :demand t ; only necessary if you have the hook below
+  ;; if you want to have consult previews as you move around an
+  ;; auto-updating embark collect buffer
+  :hook
+  (embark-collect-mode . embark-consult-preview-minor-mode))
+
+(use-package expand-region
+  :bind
+  (("C-=" . er/expand-region)
+  ("C--" . er/contract-region)))
+
+(use-package iedit)
+
+(use-package flycheck
+  :hook
+  ((prog-mode . flycheck-mode)
+   (emacs-lisp-mode . (lambda () (flycheck-mode -1)))))
+
+(use-package consult-flycheck
+  :bind (:map flycheck-command-map
+              ("!" . consult-flycheck)))
+
+(use-package flycheck-pos-tip
+  :disabled t
+  :after
+  flycheck)
+
+(use-package flycheck-inline
+  :disabled t
+  :after
+  flycheck)
+
+(use-package undo-fu)

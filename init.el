@@ -24,60 +24,49 @@
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
 
-(use-package nano-layout
-  ;; :disabled t
+(use-package nano
   :straight (nano-emacs :type git :host github :repo "rougier/nano-emacs"
                         :fork (:host github
                                      :repo "BeneathCloud/nano-emacs")
-                        :no-byte-compile t)
-  :demand t
-  :init
-  ;; Theming Command line options (this will cancel warning messages)
-  (add-to-list 'command-switch-alist '("-dark"   . (lambda (args))))
-  (add-to-list 'command-switch-alist '("-light"  . (lambda (args))))
-  (add-to-list 'command-switch-alist '("-default"  . (lambda (args))))
-  (add-to-list 'command-switch-alist '("-no-splash" . (lambda (args))))
-  (add-to-list 'command-switch-alist '("-no-help" . (lambda (args))))
-  (add-to-list 'command-switch-alist '("-compact" . (lambda (args))))
+                        :no-byte-compile t
+                        :no-native-compile t
+                        )
   :config
-  (cond
-   ((member "-default" command-line-args) t)
-   ((member "-dark" command-line-args) (require 'nano-theme-dark))
-   (t (require 'nano-theme-light)))
-  (require 'nano-theme-dark)
-  (require 'nano-layout)
-  (require 'nano-base-colors)
-  (require 'nano-faces)
-  (nano-faces)
-  (require 'nano-theme)
-  (nano-theme)
-  ;; Nano session saving (optional)
-  (require 'nano-session)
-  ;; Nano header & mode lines (optional)
-  (require 'nano-modeline)
-  ;; Nano key bindings modification (optional)
-  ;; (require 'nano-bindings)
-  ;; Compact layout (need to be loaded after nano-modeline)
   (when (member "-compact" command-line-args)
     (require 'nano-compact))
-  ;; Welcome message (optional)
-  (let ((inhibit-message t))
-    (message "Welcome to GNU Emacs / N Λ N O edition")
-    (message (format "Initialization time: %s" (emacs-init-time))))
-  ;; Splash (optional)
-  (unless (member "-no-splash" command-line-args)
-    (require 'nano-splash))
+  (require 'nano-base-colors)
+  (require 'nano-colors)
+  (require 'nano-faces)
+  (require 'nano-theme)
+  (require 'nano-theme-dark)
+  (require 'nano-theme-light)
+  (require 'nano-splash)
+  (require 'nano-modeline)
+  (require 'nano-layout)
+  (defun update-mini-frame-color ()
+    (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
+    (custom-set-variables
+     `(mini-frame-show-parameters
+       `((top . 0.2)
+         (width . 0.6)
+         (left . 0.5)
+         (background-color . ,nano-color-background)
+         ))))
   (defun nano-theme-light ()
     (interactive)
     (nano-theme-set-light)
     (nano-faces)
-    (nano-theme))
-  (defun nano-theme-night ()
+    (nano-theme)
+    (update-mini-frame-color))
+  (defun nano-theme-dark ()
     (interactive)
     (nano-theme-set-dark)
     (nano-faces)
-    (nano-theme)))
+    (nano-theme)
+    (update-mini-frame-color))
+  (nano-theme-dark))
 
+(setq frame-resize-pixelwise t)
 (global-visual-line-mode)
 (electric-pair-mode)
 (blink-cursor-mode -1)
@@ -106,6 +95,7 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
+   "s-t" 'vterm-other-window
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
    "s-v" 'yank
@@ -167,6 +157,11 @@
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
+   :state '(insert emacs)
+   :keymaps 'vterm-mode-map
+   "C-u" 'vterm-send-C-u)
+
+  (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'xwidget-webkit-mode-map
    "s-c" 'xwidget-webkit-copy-selection-as-kill)
@@ -221,7 +216,7 @@
 
 (use-package avy
   :bind
-  ("C-;" . avy-goto-char-2))
+  ("C-;" . avy-goto-char))
 
 (use-package selectrum
   :config
@@ -275,6 +270,7 @@
   (lsp-headerline-breadcrumb-enable nil)
   :hook
   ((java-mode . lsp)
+   (ruby-mode . lsp)
    (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
@@ -303,6 +299,7 @@
 (use-package vterm
   ;; :disabled t
   :init
+  ;; (evil-define-key 'insert vterm-mode-map "C-u" 'vterm-send-C-u)
   (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
   (setq vterm-kill-buffer-on-exit t))
 
@@ -335,7 +332,7 @@
 
 ;; !need to install ripgrep command line tool in your system
 (use-package snails
-  ;; :disabled t
+  :disabled t
   :straight (snails :type git :host github :repo "manateelazycat/snails" :no-byte-compile t)
   :config
   (add-to-list 'evil-emacs-state-modes 'snails-mode)
@@ -359,6 +356,7 @@
 ;; fuzzy search dependency for Snails
 ;; !needs to install Rust on your system
 (use-package fuz
+  :disabled t
   :straight (fuz :type git :host github :repo "rustify-emacs/fuz.el")
   :config
   (unless (require 'fuz-core nil t)
@@ -399,7 +397,11 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(mac-command-modifier 'super))
+ '(custom-safe-themes
+   '("4780d7ce6e5491e2c1190082f7fe0f812707fc77455616ab6f8b38e796cbffa9" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "801a567c87755fe65d0484cb2bded31a4c5bb24fd1fe0ed11e6c02254017acb2" "dbade2e946597b9cda3e61978b5fcc14fa3afa2d3c4391d477bdaeff8f5638c5" "a5d04a184d259f875e3aedbb6dbbe8cba82885d66cd3cf9482a5969f44f606c0" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" default))
+ '(mini-frame-internal-border-color "#434C5E")
+ '(mini-frame-show-parameters `((top . 0.2) (width . 0.6) (left . 0.5)))
+ '(ns-command-modifier 'super))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -408,11 +410,6 @@
  )
 
 (use-package all-the-icons)
-
-(use-package treemacs
-  ;; :demand t
-  :disabled t
-  )
 
 (use-package treemacs-icons-dired
   :disabled t
@@ -452,34 +449,30 @@
 (use-package mini-frame
   :config
   (setq mini-frame-resize t)
-  ;; (setq mini-frame-internal-border-color nano-color-subtle)
   (mini-frame-mode +1)
-  (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
+  ;; (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
   (custom-set-variables
- `(mini-frame-show-parameters
-   `((top . 0.2)
-     (width . 0.6)
-     (left . 0.5)
-     (background-color . ,nano-color-background)
-     ;; (background-color . ,nano-color-subtle) 
-     ;; (foreground-color . "#D08770")
-     ;; (border-color . "#677691")
-     ;; (height . 16)
-     )))
+   `(mini-frame-show-parameters
+     `((top . 0.2)
+       (width . 0.6)
+       (left . 0.5)
+       ;; (background-color . ,nano-color-background)
+       )))
   ;; workaround for not showing candidates if no typed characters, should be fixed in Emacs 27.2
-  (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
-  (cl-letf* ((orig (symbol-function #'window-text-pixel-size))
-             ((symbol-function #'window-text-pixel-size)
-              (lambda (win from to &rest args)
-                (apply orig
-                       (append (list win from 
-                                     (if (and (window-minibuffer-p win)
-                                              (frame-root-window-p win)
-                                              (eq t to))
-                                         nil
-                                       to))
-                               args)))))
-    (apply f args))))
+  ;; (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
+  ;; (cl-letf* ((orig (symbol-function #'window-text-pixel-size))
+  ;;            ((symbol-function #'window-text-pixel-size)
+  ;;             (lambda (win from to &rest args)
+  ;;               (apply orig
+  ;;                      (append (list win from 
+  ;;                                    (if (and (window-minibuffer-p win)
+  ;;                                             (frame-root-window-p win)
+  ;;                                             (eq t to))
+  ;;                                        nil
+  ;;                                      to))
+  ;;                              args)))))
+  ;; (apply f args)))
+)
 
 (use-package consult
   :init
@@ -564,3 +557,11 @@
   flycheck)
 
 (use-package undo-fu)
+
+(use-package tao-theme
+  ;; :config
+  ;; (set-face-attribute 'default nil :height 180)
+  ;; (load-theme 'tao-yang t)
+  )
+
+(use-package minimal-theme)

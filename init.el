@@ -1,12 +1,11 @@
 ;;-*- lexical-binding: t -*-
 
 ;; TODO
-;; 1. remove useless packages
+
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 ;; 3. make edwina work with treemacs
-
-
+(require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
 (let ((bootstrap-file
@@ -29,8 +28,7 @@
                         :fork (:host github
                                      :repo "BeneathCloud/nano-emacs")
                         :no-byte-compile t
-                        :no-native-compile t
-                        )
+                        :no-native-compile t)
   :config
   (when (member "-compact" command-line-args)
     (require 'nano-compact))
@@ -64,7 +62,7 @@
     (nano-faces)
     (nano-theme)
     (update-mini-frame-color))
-  (nano-theme-dark))
+  (nano-theme-light))
 
 (setq frame-resize-pixelwise t)
 (global-visual-line-mode)
@@ -113,6 +111,7 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "n" 'deft
    "'s" 'consult-register-store
    "'l" 'consult-register-load
    "''" 'consult-register
@@ -256,7 +255,7 @@
   (exec-path-from-shell-copy-envs
    '("GOPATH" "NPMBIN" "LC_ALL" "LANG"
      "LC_TYPE" "SSH_AGENT_PID" "SSH_AUTH_SOCK" "SHELL"
-     "JAVA_HOME" "CLASSPATH")))
+     "JAVA_HOME" "CLASSPATH" "PKG_CONFIG_PATH")))
 
 (when (string= system-type "darwin")       
   (setq dired-use-ls-dired nil))
@@ -400,14 +399,12 @@
  '(custom-safe-themes
    '("4780d7ce6e5491e2c1190082f7fe0f812707fc77455616ab6f8b38e796cbffa9" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "801a567c87755fe65d0484cb2bded31a4c5bb24fd1fe0ed11e6c02254017acb2" "dbade2e946597b9cda3e61978b5fcc14fa3afa2d3c4391d477bdaeff8f5638c5" "a5d04a184d259f875e3aedbb6dbbe8cba82885d66cd3cf9482a5969f44f606c0" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" default))
  '(mini-frame-internal-border-color "#434C5E")
- '(mini-frame-show-parameters `((top . 0.2) (width . 0.6) (left . 0.5)))
+ '(mini-frame-show-parameters
+   `((top . 0.2)
+     (width . 0.6)
+     (left . 0.5)
+     (background-color \, nano-color-background)))
  '(ns-command-modifier 'super))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
 
 (use-package all-the-icons)
 
@@ -450,13 +447,13 @@
   :config
   (setq mini-frame-resize t)
   (mini-frame-mode +1)
-  ;; (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
+  (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
   (custom-set-variables
    `(mini-frame-show-parameters
      `((top . 0.2)
        (width . 0.6)
        (left . 0.5)
-       ;; (background-color . ,nano-color-background)
+       (background-color . ,nano-color-background)
        )))
   ;; workaround for not showing candidates if no typed characters, should be fixed in Emacs 27.2
   ;; (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
@@ -565,3 +562,99 @@
   )
 
 (use-package minimal-theme)
+
+;;; Install epdfinfo via 'brew install pdf-tools --HEAD' and then install the
+;;; pdf-tools elisp via the use-package below. To upgrade the epdfinfo
+;;; server, just do 'brew upgrade pdf-tools' prior to upgrading to newest
+;;; pdf-tools package using Emacs package system. If things get messed
+;;; up, just do 'brew uninstall pdf-tools', wipe out the elpa
+;;; pdf-tools package and reinstall both as at the start.
+(use-package pdf-tools
+  :disabled t
+  :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
+                        :fork (:host github
+                                     :repo "flatwhatson/pdf-tools"))
+  :init
+  (setq pdf-view-use-scaling t)
+  :config
+  (custom-set-variables
+    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+  (pdf-tools-install))
+
+(use-package markdown-mode
+  :mode (("README\\.md\\'" . gfm-mode)
+         ("\\.md\\'" . markdown-mode)
+         ;; ("\\.md\\'" . gfm-mode)
+         ("\\.markdown\\'" . markdown-mode))
+         ;; ("\\.markdown\\'" . gfm-mode))
+  :hook
+  (markdown-mode . variable-pitch-mode)
+  (markdown-mode . (lambda ()
+                     ;; (setq markdown-hide-urls t)
+                     (setq markdown-hide-markup t)
+                     (markdown-enable-header-scaling)
+                     (setq markdown-enable-prefix-prompts nil)
+                     (setq markdown-enable-math t)))
+  :init
+  (defun markdown-enable-header-scaling ()
+    (interactive)
+    (setq markdown-header-scaling t)
+    (markdown-update-header-faces t  '(2.0 1.7 1.4 1.1 1.0 1.0)))
+  ;; (defun markdown-live-preview-window-xwidget (file)
+  ;;   (xwidget-webkit-browse-url file)
+  ;;   (loop for buffer in (buffer-list)
+  ;;       do (if (string-prefix-p "<# buffer *xwidget" (buffer-name buffer))
+  ;;              (get-buffer buffer))))
+  (setq markdown-xhtml-header-content
+      (concat "<script type=\"text/javascript\" async"
+              " src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/"
+              "2.7.1/MathJax.js?config=TeX-MML-AM_CHTML\">"
+              "</script>"))
+  (setq markdown-command "multimarkdown")
+  (setq markdown-asymmetric-header t)
+  (setq markdown-indent-on-enter 'indent-and-new-item)
+  (setq markdown-display-remote-images t)
+  (setq markdown-electric-backquote t)
+  (setq markdown-fontify-code-blocks-natively t)
+  (setq markdown-enable-wiki-links t)
+  (setq markdown-enable-math t)
+  ;; (setq markdown-live-preview-window-function 'markdown-live-preview-window-xwidget)
+  (setq markdown-open-command "/usr/local/bin/mark")
+  :bind
+  (:map markdown-mode-map
+        ("C-<left>" . markdown-promote)
+        ("C-<right>" . markdown-demote)
+        ("C-<up>" . markdown-move-up)
+        ("C-<down>" . markdown-move-down)))
+
+(use-package edit-indirect)
+
+(use-package iscroll
+  :disabled t
+  :straight (iscroll :type git :host: github :repo "casouri/iscroll")
+  :bind
+  (:map evil-normal-state-map
+        ("j" . iscroll-next-line)
+        ("k" . iscroll-previous-line)
+        ("C-n" . iscroll-next-line)
+        ("C-p" . iscroll-previous-line)))
+
+(use-package deft
+  :commands (deft deft-open-file deft-new-file-named)
+  :config
+  (setq deft-directory "~/notes/"
+        deft-recursive t
+        deft-extensions '("md" "txt" "org" "tex")
+        deft-use-filter-string-for-filename nil
+        deft-use-filename-as-title nil
+        deft-markdown-mode-title-level 1
+        deft-file-naming-rules '((noslash . "-")
+                                 (nospace . "-")
+                                 (case-fn . downcase))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(nano-face-strong ((t (:foreground "#ECEFF4" :weight normal :family "Roboto Mono"))) t))

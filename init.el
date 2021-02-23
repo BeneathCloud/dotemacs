@@ -5,6 +5,7 @@
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 ;; 3. make edwina work with treemacs
+;; 4. add textbunlde support
 (require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
@@ -14,6 +15,7 @@
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
+
          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
@@ -64,9 +66,10 @@
     (update-mini-frame-color))
   (nano-theme-light))
 
+(setq delete-by-moving-to-trash t)
+(setq trash-directory "~/.Trash")
 (setq frame-resize-pixelwise t)
 (global-visual-line-mode)
-(electric-pair-mode)
 (blink-cursor-mode -1)
 (delete-selection-mode nil)
 ;; (desktop-save-mode nil)
@@ -93,7 +96,8 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
-   "s-t" 'vterm-other-window
+   ;; "s-t" 'vterm-other-window
+   "s-t" 'eshell
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
    "s-v" 'yank
@@ -111,7 +115,16 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
-   "n" 'deft
+   "nt" 'org-roam-dailies-find-today
+   "nT" 'org-roam-dailies-find-directory
+   "nd" 'deft
+   "nn" 'org-roam-find-file
+   "nii" 'org-roam-insert
+   "nij" 'my-insert-jpg-from-clipboard
+   "nig" 'my-insert-gif-from-clipboard
+   "nI" 'org-roam-insert-immediate
+   "nl" 'org-roam
+   "ng" 'org-roam-graph
    "'s" 'consult-register-store
    "'l" 'consult-register-load
    "''" 'consult-register
@@ -148,6 +161,7 @@
    :keymaps 'global
    "C-a" 'beginning-of-visual-line
    "C-e" 'end-of-visual-line
+   "C-k" 'kill-line
    )
 
   (general-define-key
@@ -161,6 +175,15 @@
    "C-u" 'vterm-send-C-u)
 
   (general-define-key
+   :state '(normal)
+   :keymaps 'markdown-mode-map
+   "<tab>" 'markdown-cycle)
+
+  (general-define-key
+   :state '(insert emacs)
+   :keymaps 'vterm-mode-map
+   "C-u" 'vterm-send-C-u)
+  (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'xwidget-webkit-mode-map
    "s-c" 'xwidget-webkit-copy-selection-as-kill)
@@ -168,12 +191,6 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    "M-SPC" 'consult-buffer)
-  (general-define-key
-   :states '(emacs)
-   :keymaps 'snails-mode-map
-   "C-j" 'snails-select-next-backend
-   "C-k" 'snails-select-prev-backend
-)
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'eyebrowse-mode-map
@@ -253,9 +270,9 @@
   (setq exec-path-from-shell-arguments '("-l"))
   (exec-path-from-shell-initialize)
   (exec-path-from-shell-copy-envs
-   '("GOPATH" "NPMBIN" "LC_ALL" "LANG"
+   '("NODE_PATH" "GOPATH" "NPMBIN" "LC_ALL" "LANG"
      "LC_TYPE" "SSH_AGENT_PID" "SSH_AUTH_SOCK" "SHELL"
-     "JAVA_HOME" "CLASSPATH" "PKG_CONFIG_PATH")))
+     "JAVA_HOME" "CLASSPATH" "PKG_CONFIG_PATH" "PATH")))
 
 (when (string= system-type "darwin")       
   (setq dired-use-ls-dired nil))
@@ -592,6 +609,7 @@
   (markdown-mode . variable-pitch-mode)
   (markdown-mode . (lambda ()
                      ;; (setq markdown-hide-urls t)
+                     (markdown-display-inline-images)
                      (setq markdown-hide-markup t)
                      (markdown-enable-header-scaling)
                      (setq markdown-enable-prefix-prompts nil)
@@ -600,12 +618,7 @@
   (defun markdown-enable-header-scaling ()
     (interactive)
     (setq markdown-header-scaling t)
-    (markdown-update-header-faces t  '(2.0 1.7 1.4 1.1 1.0 1.0)))
-  ;; (defun markdown-live-preview-window-xwidget (file)
-  ;;   (xwidget-webkit-browse-url file)
-  ;;   (loop for buffer in (buffer-list)
-  ;;       do (if (string-prefix-p "<# buffer *xwidget" (buffer-name buffer))
-  ;;              (get-buffer buffer))))
+    (markdown-update-header-faces t  '(1.3 1.2 1.1 1.0 1.0 1.0)))
   (setq markdown-xhtml-header-content
       (concat "<script type=\"text/javascript\" async"
               " src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/"
@@ -621,6 +634,8 @@
   (setq markdown-enable-math t)
   ;; (setq markdown-live-preview-window-function 'markdown-live-preview-window-xwidget)
   (setq markdown-open-command "/usr/local/bin/mark")
+  (setq markdown-max-image-size '(500 . 500))
+  ;; (evil-define-key 'normal 'markdown-mode-map (kbd "RET") 'markdown-follow-wiki-link-at-point)
   :bind
   (:map markdown-mode-map
         ("C-<left>" . markdown-promote)
@@ -643,18 +658,181 @@
 (use-package deft
   :commands (deft deft-open-file deft-new-file-named)
   :config
-  (setq deft-directory "~/notes/"
+  (setq deft-directory "~/Space/Areas/SlipBox/"
         deft-recursive t
         deft-extensions '("md" "txt" "org" "tex")
         deft-use-filter-string-for-filename nil
-        deft-use-filename-as-title nil
+        deft-use-filename-as-title t
         deft-markdown-mode-title-level 1
-        deft-file-naming-rules '((noslash . "-")
-                                 (nospace . "-")
+        deft-file-naming-rules '((noslash . "-")                           (nospace . "-")
                                  (case-fn . downcase))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(nano-face-strong ((t (:foreground "#ECEFF4" :weight normal :family "Roboto Mono"))) t))
+
+(use-package eshell
+  :hook
+  (eshell-mode . (lambda ()
+                   (evil-define-key 'insert eshell-mode-map
+                     (kbd "C-u") 'eshell-kill-input
+                     (kbd "C-a") 'eshell-bol
+                     (kbd "C-p") 'eshell-previous-matching-input-from-input
+                     (kbd "C-n") 'eshell-next-matching-input-from-input))))
+
+(use-package org-roam
+  :after
+  (md-roam)
+  :init
+  (setq org-roam-directory "~/Space/Areas/SlipBox")
+  (setq slipbox-resources-directory (concat (expand-file-name org-roam-directory) "/Assets/"))
+  (setq org-roam-file-extensions '("md" "org"))
+  (setq org-roam-dailies-directory "~/Space/Areas/SlipBox/Daily")
+  (setq org-roam-dailies-capture-templates
+      '(("d" "default" plain
+         #'org-roam-capture--get-point
+         "%?"
+         :file-name "Daily/%<%Y-%m-%d>"
+         :head "---\ndate:%<%Y-%m-%d %H:%M:%S>\ncategory: #daily\n---\n\n# Daily Note\n\n## Mood Track\n\n## Dream Log\n\n## Story Clip\n\n## Life Record\n\n## Fleeting Notes")))
+  (setq org-roam-capture-templates
+        '(("l" "literature" plain (function org-roam--capture-get-point)
+           "%?"
+           :file-name "Literature/${slug}"
+           :head "---\ndate:%<%Y-%m-%d %H:%M:%S>\nsource: %^{source}\ncategory: #literature\n---\n\n# ${title}"
+           :unnarrowed t)
+          ("p" "permanent" plain (function org-roam--capture-get-point)
+           "%?"
+           :file-name "Permanent/${slug}"
+           :head "---\ndate:%<%Y-%m-%d %H:%M:%S>\nsource: %^{source}\ncategory: #permanent\n---\n\n# ${title}"
+           :unnarrowed t))))
+
+(use-package md-roam
+  :straight (md-roam :type git :host github :repo "nobiot/md-roam")
+  :init
+  (setq md-roam-file-extension-single "md")
+  (setq org-roam-title-sources '((mdtitle title mdheadline headline) (mdalias alias)))
+  (setq org-roam-tag-sources '(md-frontmatter))
+  (setq md-roam-use-org-file-links nil)
+  (defun my-md-insert-file ()
+    "select a file and insert to copy to resources dir and insert md link"
+    (interactive)
+    (let* ((filename (read-file-name "select a file: "))
+           (extension (file-name-extension filename))
+           (new-filename-nondir (concat (format-time-string "%Y-%m-%d_%H-%M-%S") "." extension))
+           (new-filename (concat slipbox-resources-directory new-filename-nondir)))
+      (copy-file filename new-filename)
+      (insert (concat "[](../Assets/" new-filename-nondir ")"))))
+  (defun my-insert-image-from-clipboard (format)
+    "paste image from clipboard to org-roam-directory/resources
+and insert the markdown link to current position.
+require pastepng installed.
+argument: format, can be png, jpg, gif, pdf, tif, jpeg (string)"
+    (interactive)
+    (if (string= "pdf" format)
+        (setq format "png"))
+    (setq filename
+          (concat
+           (format-time-string "%Y-%m-%d_%H-%M-%S") "." format))
+    (start-process "" nil "pngpaste"
+                  (concat (expand-file-name org-roam-directory)
+                          "/Assets/"
+                          filename))
+    (insert (concat "![](../Assets/" filename ")"))
+    (markdown-display-inline-images))
+  (defun my-insert-jpg-from-clipboard ()
+    (interactive)
+    (my-insert-image-from-clipboard "jpg"))
+  (defun my-insert-gif-from-clipboard ()
+    (interactive)
+    (my-insert-image-from-clipboard "gif"))
+  (defun delete-resource ()
+    "delete resources file from current line's markdown link"
+    (interactive)
+    (let* ((line (buffer-substring-no-properties
+                  (line-beginning-position)
+                  (line-end-position)))
+           (start (+ (string-match "(" line) 1))
+           (end (string-match ")" line)))
+      (delete-file (expand-file-name (substring line start end)))
+      (kill-whole-line)))
+  (defun my/all-occur (regexp string)
+    "Get a list of all regexp matches in a string"
+    (interactive)
+    (save-match-data
+      (let ((pos 0)
+            matches)
+        (while (string-match regexp string pos)
+          (push (match-string 0 string) matches)
+          (setq pos (match-end 0)))
+        matches)))
+  (defun my/file-contents (filename)
+    "Return the contents of FILENAME."
+    (with-temp-buffer
+      (insert-file-contents filename)
+      (buffer-string)))
+  (defun my/all-md-link (filename)
+    (interactive)
+    (my/all-occur "\\[.*\\]\\(.*\\)" (my/file-contents filename)))
+  (defun my/export-md-to-textbundle-structure ()
+    "export a selected md file, copy md file and its assets to Downloads dir,
+and process the md link inside to adapt to textbundle dir strucuture,
+remove the md and assets file to a trash dir
+requires that the original md file has a structure of SlipBox"
+    (interactive)
+    (let* ((filename (read-file-name ""))
+           (default-directory (file-name-directory filename))
+           (filename-nondir (file-name-nondirectory filename))
+           (filename-sans (file-name-sans-extension filename-nondir))
+           (all-md-links (my/all-md-link filename))
+           (output-dir (concat (expand-file-name "~/Downloads/") filename-sans "/"))
+           (assets-dir (concat output-dir "assets/"))
+           (output-md-file-name (concat output-dir filename-nondir))
+           (all-links
+            (mapcar (lambda (link) (expand-file-name (substring (string-trim-right link) 3 -1) ))
+                    all-md-links)))
+      (when (not (file-directory-p output-dir)) (make-directory output-dir))
+      (when (not (file-directory-p assets-dir)) (make-directory assets-dir))
+      (copy-file filename output-md-file-name)
+      (dolist (filename all-links)
+        (copy-file filename (concat assets-dir (file-name-nondirectory filename)))
+        (message (concat "file " filename " copied successfully"))
+        (move-file-to-trash filename)
+        (message (concat "file " filename " deleted successfully")))
+      (start-process "" nil "sed" "-i" "" "s|](\\.\\./|](|" output-md-file-name)
+      (move-file-to-trash filename)
+      (message (concat "file " filename " copied and deleted successfully")))))
+
+;; (use-package cnfonts
+;;   :init
+;;   (setq cnfonts-personal-fontnames '(("Emacs" "My Roboto Mono" "等距更纱黑体 SC" "Sarasa Mono")))
+;;   :config
+;;   (cnfonts-enable))
+
+;; (defun cfs--font-family-list ()
+;;   (insert (format "%s" (delete-dups
+;;    (mapcar #'(lambda (x)
+;;                (substring-no-properties
+;;                 (string-as-multibyte x)))
+;;            (font-family-list))))))
+
+(use-package restclient)
+
+(use-package ob-restclient
+  :after org)
+
+(use-package org
+  :init
+  (setq org-confirm-babel-evaluate nil)
+  :config
+  (require 'ob-js)
+  (require 'ob-haskell)
+  (require 'ob-restclient)
+  (require 'ob-ruby))
+
+(use-package electric
+  :config
+  (electric-pair-mode)
+  :hook
+  (org-mode
+   . (lambda ()
+       (setq-local electric-pair-inhibit-predicate
+                   `(lambda (c)
+                      (if (char-equal c ?<)
+                          t
+                        (,electric-pair-inhibit-predicate c)))))))

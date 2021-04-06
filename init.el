@@ -216,6 +216,7 @@
    (evil-mode))
 
 (use-package evil-collection
+  :disabled t
   :after evil
   :config
   (evil-collection-init))
@@ -1029,6 +1030,7 @@ requires that the original md file has a structure of SlipBox"
   (setq geiser-chez-binary "chez"))
 
 (use-package electric
+  :disabled t
   :config
   (electric-pair-mode)
   :hook
@@ -1089,3 +1091,8 @@ requires that the original md file has a structure of SlipBox"
         telephone-line-secondary-left-separator 'telephone-line-flat
         telephone-line-secondary-right-separator telephone-line-secondary-left-separator)
   (telephone-line-mode 1))
+
+(use-package lispy
+  :hook
+  ((clojure-mode . (lambda () (lispy-mode 1)))
+   (emacs-lisp-mode . (lambda () (lispy-mode 1)))))

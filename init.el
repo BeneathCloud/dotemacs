@@ -24,6 +24,7 @@
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
+(setq-default with-editor-emacsclient-executable "/opt/homebrew/bin/emacsclient")
 
 (use-package nano
   :disabled t
@@ -31,41 +32,49 @@
                         :fork (:host github
                                      :repo "BeneathCloud/nano-emacs")
                         :no-byte-compile t
-                        :no-native-compile t)
-  :config
-  (when (member "-compact" command-line-args)
-    (require 'nano-compact))
-  (require 'nano-base-colors)
-  (require 'nano-colors)
-  (require 'nano-faces)
-  (require 'nano-theme)
-  (require 'nano-theme-dark)
-  (require 'nano-theme-light)
-  (require 'nano-splash)
-  (require 'nano-modeline)
+                        ;; :no-native-compile t
+                        )
+  ;; :config
+  ;; (when (member "-compact" command-line-args)
+  ;;   (require 'nano-compact))
+  ;; (require 'nano-base-colors)
+  ;; (require 'nano-colors)
+  ;; (require 'nano-faces)
+  ;; (require 'nano-theme)
+  ;; (require 'nano-theme-dark)
+  ;; (require 'nano-theme-light)
+  ;; (require 'nano-splash)
+  ;; (require 'nano-modeline)
+  ;; (require 'nano-layout)
+  ;; (defun update-mini-frame-color ()
+  ;;   (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
+  ;;   (custom-set-variables
+  ;;    `(mini-frame-show-parameters
+  ;;      `((top . 0.2)
+  ;;        (width . 0.6)
+  ;;        (left . 0.5)
+  ;;        (background-color . ,nano-color-background)
+  ;;        ))))
+  ;; (defun nano-theme-light ()
+  ;;   (interactive)
+  ;;   (nano-theme-set-light)
+  ;;   (nano-faces)
+  ;;   (nano-theme)
+  ;;   (update-mini-frame-color))
+  ;; (defun nano-theme-dark ()
+  ;;   (interactive)
+  ;;   (nano-theme-set-dark)
+  ;;   (nano-faces)
+  ;;   (nano-theme)
+  ;;   (update-mini-frame-color))
+  ;; (nano-theme-light)
+  )
+
+(use-package gruvbox-theme
+  :init
+  (add-to-list 'load-path "~/.emacs.d/straight/repos/nano-emacs/")
   (require 'nano-layout)
-  (defun update-mini-frame-color ()
-    (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
-    (custom-set-variables
-     `(mini-frame-show-parameters
-       `((top . 0.2)
-         (width . 0.6)
-         (left . 0.5)
-         (background-color . ,nano-color-background)
-         ))))
-  (defun nano-theme-light ()
-    (interactive)
-    (nano-theme-set-light)
-    (nano-faces)
-    (nano-theme)
-    (update-mini-frame-color))
-  (defun nano-theme-dark ()
-    (interactive)
-    (nano-theme-set-dark)
-    (nano-faces)
-    (nano-theme)
-    (update-mini-frame-color))
-  (nano-theme-light))
+  (load-theme 'gruvbox t))
 
 (setq delete-by-moving-to-trash t)
 (setq trash-directory "~/.Trash")
@@ -85,6 +94,7 @@
       mac-command-modifier　'super
       mac-option-modifier 'meta
       mac-use-title-bar nil)
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 (use-package general
   :after evil
@@ -216,7 +226,7 @@
    (evil-mode))
 
 (use-package evil-collection
-  :disabled t
+  ;; :disabled t
   :after evil
   :config
   (evil-collection-init))
@@ -262,6 +272,13 @@
 (use-package key-chord
   :config
   (key-chord-mode 1))
+
+(use-package cider
+  :after org
+  :bind
+  (:map clojure-mode-map
+        ("C-<return>" . cider-eval-last-sexp)
+        ("C-c C-s" . cider-jack-in)))
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
@@ -1046,7 +1063,9 @@ requires that the original md file has a structure of SlipBox"
   :hook
   (org-mode . org-fragtog-mode))
 
-(use-package w3m)
+(use-package w3m
+  :init
+  (setq w3m-command "/opt/homebrew/bin/w3m"))
 
 (use-package tidal
   :init
@@ -1054,18 +1073,6 @@ requires that the original md file has a structure of SlipBox"
 
 (use-package clojure-mode)
 
-(use-package cider
-  :after org
-  :bind
-  (:map clojure-mode-map
-        ("C-<return>" . cider-eval-last-sexp)
-        ("C-c C-s" . cider-jack-in)))
-
-(use-package gruvbox-theme
-  :init
-  (add-to-list 'load-path "~/.emacs.d/straight/repos/nano-emacs/")
-  (require 'nano-layout)
-  (load-theme 'gruvbox t))
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1096,3 +1103,4 @@ requires that the original md file has a structure of SlipBox"
   :hook
   ((clojure-mode . (lambda () (lispy-mode 1)))
    (emacs-lisp-mode . (lambda () (lispy-mode 1)))))
+

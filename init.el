@@ -655,7 +655,7 @@
 (use-package deft
   :commands (deft deft-open-file deft-new-file-named)
   :config
-  (setq deft-directory "~/Space/Permanents/"
+  (setq deft-directory "~/Space/"
         deft-recursive t
         deft-extensions '("md" "txt" "org" "tex")
         deft-use-filter-string-for-filename nil
@@ -1102,5 +1102,6 @@ requires that the original md file has a structure of SlipBox"
 (use-package lispy
   :hook
   ((clojure-mode . (lambda () (lispy-mode 1)))
-   (emacs-lisp-mode . (lambda () (lispy-mode 1)))))
+   (emacs-lisp-mode . (lambda () (lispy-mode 1)))
+   (scheme-mode . (lambda () (lispy-mode)))))
 

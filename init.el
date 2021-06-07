@@ -27,25 +27,21 @@
 (setq-default with-editor-emacsclient-executable "/opt/homebrew/bin/emacsclient")
 
 (use-package nano
-  :disabled t
   :straight (nano-emacs :type git :host github :repo "rougier/nano-emacs"
                         :fork (:host github
                                      :repo "BeneathCloud/nano-emacs")
-                        :no-byte-compile t
-                        ;; :no-native-compile t
-                        )
-  ;; :config
-  ;; (when (member "-compact" command-line-args)
-  ;;   (require 'nano-compact))
+                        :no-byte-compile t)
+  :config
   ;; (require 'nano-base-colors)
   ;; (require 'nano-colors)
   ;; (require 'nano-faces)
   ;; (require 'nano-theme)
-  ;; (require 'nano-theme-dark)
   ;; (require 'nano-theme-light)
   ;; (require 'nano-splash)
   ;; (require 'nano-modeline)
   ;; (require 'nano-layout)
+  ;; (require 'nano-minibuffer)
+  ;; (require 'nano-compact)
   ;; (defun update-mini-frame-color ()
   ;;   (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
   ;;   (custom-set-variables
@@ -71,6 +67,7 @@
   )
 
 (use-package gruvbox-theme
+  :disabled t
   :init
   (add-to-list 'load-path "~/.emacs.d/straight/repos/nano-emacs/")
   (require 'nano-layout)
@@ -95,6 +92,7 @@
       mac-option-modifier 'meta
       mac-use-title-bar nil)
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+(scroll-bar-mode -1)
 
 (use-package general
   :after evil
@@ -141,7 +139,8 @@
    "o" 'consult-outline
    "i" 'consult-imenu
    "I" 'lsp-ui-imenu
-   "SPC" 'projectile-find-file
+   "SPC" 'consult-buffer
+   ;; "SPC" 'projectile-find-file
    "x" 'execute-extended-command
    "g" 'magit
    "pp" 'projectile-switch-project
@@ -242,6 +241,11 @@
 (use-package avy
   :bind
   ("C-;" . avy-goto-char))
+
+(use-package ivy
+  :disabled
+  :config
+  (ivy-mode))
 
 (use-package selectrum
   :config
@@ -458,6 +462,7 @@
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 
 (use-package mini-frame
+  :disabled t
   :config
   (setq mini-frame-resize t)
   (mini-frame-mode +1)
@@ -527,12 +532,14 @@
 )
 
 (use-package embark
+  :disabled t
   :ensure t
   :bind
   ("C-S-a" . embark-act))             
 
 ;; Consult users will also want the embark-consult package.
 (use-package embark-consult
+  :disabled t
   :ensure t
   :after (embark consult)
   :demand t ; only necessary if you have the hook below
@@ -1047,7 +1054,7 @@ requires that the original md file has a structure of SlipBox"
   (setq geiser-chez-binary "chez"))
 
 (use-package electric
-  :disabled t
+  ;; :disabled t
   :config
   (electric-pair-mode)
   :hook
@@ -1073,25 +1080,18 @@ requires that the original md file has a structure of SlipBox"
 
 (use-package clojure-mode)
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("d14f3df28603e9517eb8fb7518b662d653b25b26e83bd8e129acea042b774298" default))
- '(mini-frame-show-parameters `((top . 0.2) (width . 0.6) (left . 0.5))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(internal-border ((t (:background "#282828"))))
- '(window-divider ((t (:foreground "#282828"))))
- '(window-divider-first-pixel ((t (:foreground "gray25"))))
- '(window-divider-last-pixel ((t (:foreground "gray25")))))
+;; (custom-set-faces
+;;  ;; custom-set-faces was added by Custom.
+;;  ;; If you edit it by hand, you could mess it up, so be careful.
+;;  ;; Your init file should contain only one such instance.
+;;  ;; If there is more than one, they won't work right.
+;;  '(internal-border ((t (:background "#282828"))))
+;;  '(window-divider ((t (:foreground "#282828"))))
+;;  '(window-divider-first-pixel ((t (:foreground "gray25"))))
+;;  '(window-divider-last-pixel ((t (:foreground "gray25")))))
 
 (use-package telephone-line
+  :disabled t
   :config
   (setq telephone-line-primary-left-separator 'telephone-line-flat
         telephone-line-primary-right-separator telephone-line-primary-left-separator
@@ -1105,3 +1105,16 @@ requires that the original md file has a structure of SlipBox"
    (emacs-lisp-mode . (lambda () (lispy-mode 1)))
    (scheme-mode . (lambda () (lispy-mode)))))
 
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   '("cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )

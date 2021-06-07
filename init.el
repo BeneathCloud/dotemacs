@@ -148,6 +148,7 @@
    "pa" 'projectile-add-known-project
    "pf" 'projectile-find-file
    "f" 'find-file
+   "F" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
    "r" 'consult-recent-file
    "d" 'dired

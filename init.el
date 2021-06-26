@@ -1,6 +1,6 @@
 ;;-*- lexical-binding: t -*-
 
-;; TODO
+; TODO
 
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
@@ -26,45 +26,27 @@
 (setq straight-use-package-by-default t)
 (setq-default with-editor-emacsclient-executable "/opt/homebrew/bin/emacsclient")
 
-(use-package nano
-  :straight (nano-emacs :type git :host github :repo "rougier/nano-emacs"
-                        :fork (:host github
-                                     :repo "BeneathCloud/nano-emacs")
-                        :no-byte-compile t)
+(use-package nano-theme
+  :straight (nano-theme :type git :host github
+                        :repo "rougier/nano-theme")
   :config
-  ;; (require 'nano-base-colors)
-  ;; (require 'nano-colors)
-  ;; (require 'nano-faces)
-  ;; (require 'nano-theme)
-  ;; (require 'nano-theme-light)
-  ;; (require 'nano-splash)
-  ;; (require 'nano-modeline)
-  ;; (require 'nano-layout)
-  ;; (require 'nano-minibuffer)
-  ;; (require 'nano-compact)
-  ;; (defun update-mini-frame-color ()
-  ;;   (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
-  ;;   (custom-set-variables
-  ;;    `(mini-frame-show-parameters
-  ;;      `((top . 0.2)
-  ;;        (width . 0.6)
-  ;;        (left . 0.5)
-  ;;        (background-color . ,nano-color-background)
-  ;;        ))))
-  ;; (defun nano-theme-light ()
-  ;;   (interactive)
-  ;;   (nano-theme-set-light)
-  ;;   (nano-faces)
-  ;;   (nano-theme)
-  ;;   (update-mini-frame-color))
-  ;; (defun nano-theme-dark ()
-  ;;   (interactive)
-  ;;   (nano-theme-set-dark)
-  ;;   (nano-faces)
-  ;;   (nano-theme)
-  ;;   (update-mini-frame-color))
-  ;; (nano-theme-light)
-  )
+  (load-theme 'nano t)
+  (nano-light)
+  (nano-setup)
+  (tool-bar-mode -1))
+
+(use-package nano-modeline
+  ;; :disabled t
+  :straight (nano-modeline :type git :host github
+                           :repo "rougier/nano-modeline")
+  :config
+  (nano-modeline))
+
+(use-package nano-splash
+  :straight (nano-splash  :type git :host github
+                          :repo "rougier/nano-splash")
+  :config
+  (nano-splash))
 
 (use-package gruvbox-theme
   :disabled t
@@ -86,13 +68,21 @@
 (setq-default indent-tabs-mode nil)
 (setq-default tab-width 4)
 (setq indent-line-function 'insert-tab)
-(setq mac-option-key-is-meta t
-      mac-command-key-is-meta nil
-      mac-command-modifier　'super
-      mac-option-modifier 'meta
-      mac-use-title-bar nil)
+;; (setq mac-option-key-is-meta t
+;;       mac-command-key-is-meta nil
+;;       mac-command-modifier　'super
+;;       ;; mac-command-modifier　'hyper
+;;       mac-option-modifier 'meta
+;;       mac-use-title-bar nil)
+(when (eq system-type 'darwin)
+  (setq mac-option-modifier 'meta
+        mac-command-modifier 'super
+        mac-option-key-is-meta t))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (scroll-bar-mode -1)
+(set-face-attribute 'default nil :font "Monaco-16")
+;; (set-face-attribute 'default nil :font "Menlo-16")
+;; (define-key minibuffer-local-map (kbd "s-v") 'yank)
 
 (use-package general
   :after evil
@@ -106,6 +96,7 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    ;; "s-t" 'vterm-other-window
+   "s-;" 'eval-expression
    "s-t" 'eshell-other-window
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
@@ -119,11 +110,20 @@
    "s-q" 'save-buffers-kill-terminal
    "s-=" 'text-scale-increase
    "s--" 'text-scale-decrease
-   "s-0" 'text-scale-set)
+   "s-0" 'text-scale-set
+	)
+
+  (general-define-key
+   :keymaps 'minibuffer-local-map
+   "s-v" 'yank
+   "C-u" (lambda () (interactive) (kill-line 0))
+   )
+
   (general-define-key
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   ";" 'eval-expression
    "'s" 'consult-register-store
    "'l" 'consult-register-load
    "''" 'consult-register
@@ -148,11 +148,11 @@
    "pa" 'projectile-add-known-project
    "pf" 'projectile-find-file
    "f" 'find-file
-   "F" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
+   "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
    "r" 'consult-recent-file
    "d" 'dired
-   "D" 'ranger
+   ;; "D" 'ranger
    "b" 'switch-to-buffer
    "S" 'im/search-rg+
    "O" 'olivetti-mode
@@ -402,6 +402,7 @@
   (edwina-mode 1))
 
 (use-package beacon
+  ;; :disabled t
   :config
   (beacon-mode 1))
 
@@ -438,11 +439,27 @@
   (persp-mode))
 
 (use-package ranger
+  :disabled t
   :init
   (ranger-override-dired-mode t)
-  (setq ranger-parent-depth 0)
+  (setq ranger-parent-depth 1)
+  (setq ranger-max-parent-width 0.12)
   (setq ranger-show-hidden t)
+  ;; :hook
+  ;; (
+  ;;  (change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode -1))))
+  ;;  (after-change-major-mode . (lambda () (when (not (and (eq major-mode 'dired-mode)
+  ;;   													 (eq major-mode 'ranger-mode))) (message (symbol-name major-mode)))))
+  ;;  ;(after-change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode))))
+  ;;  ;(after-change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode nil))))
+  ;; )
   )
+    ;; (setq debug-on-error t)
+
+(use-package rainbow-delimiters
+  :disabled t
+  :hook
+  (prog-mode . rainbow-delimiters-mode))
 
 (use-package all-the-icons-dired
   :hook
@@ -713,6 +730,7 @@
   :after org)
 
 (use-package org-roam
+  :disabled t
   :init
   (setq org-roam-directory "~/Space/")
   (setq org-roam-para-dirs 
@@ -856,8 +874,8 @@
       '((sequence "TODO(t)" "|" "DONE(d)" "DELEGATED(D)")))
   (setq org-tag-alist '(("flag" . ?f)))
   (setq org-log-done 'time)
-  (setq org-agenda-files
-        (my/get-one-layer-subdirs org-roam-para-dirs))
+  ;; (setq org-agenda-files
+        ;; (my/get-one-layer-subdirs org-roam-para-dirs))
   ;; don't show deadline befeore scheduled day
   (setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
   (setq org-log-into-drawer t)
@@ -886,6 +904,7 @@
   (evil-org-agenda-set-keys))
 
 (use-package org-ql
+  :disabled t
   :after org
   :init
   (setq org-agenda-custom-commands
@@ -1111,11 +1130,39 @@ requires that the original md file has a structure of SlipBox"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(blink-cursor-mode nil)
  '(custom-safe-themes
-   '("cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default)))
+   '("31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+ '(menu-bar-mode nil)
+ '(show-paren-mode t)
+ '(tool-bar-mode nil)
+ '(tooltip-mode nil))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(use-package dired
+  :straight nil
+  :hook
+  (dired-mode . dired-hide-details-mode))
+
+(use-package dired-hacks-utils)
+
+(use-package dired-open
+  :init
+  (setq dired-open-extensions '(("pdf" . "open"))))
+
+(use-package diredfl
+  :disabled t)
+
+(use-package dired-subtree
+  :init
+  (setq dired-subtree-use-backgrounds nil)
+  :config
+  (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+
+(use-package treemacs)

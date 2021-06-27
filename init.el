@@ -10,6 +10,7 @@
 (require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
+(setq straight-disable-native-compile t)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))

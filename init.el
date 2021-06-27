@@ -85,10 +85,30 @@
         mac-option-key-is-meta t))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (scroll-bar-mode -1)
+;; (add-to-list 'default-frame-alist '(font . "Monaco-18"))
 ;; (set-face-attribute 'default nil :font "JetBrains Mono-18")
-(set-face-attribute 'default nil :font "Monaco-18") 
+;; (set-face-attribute 'default nil :font "Monaco-18") 
 ;; (set-face-attribute 'default nil :font "Menlo-16")
-;; (define-key minibuffer-local-map (kbd "s-v") 'yank)
+(when (eq system-type 'darwin)
+
+      ;; default Latin font (e.g. Consolas)
+      (set-face-attribute 'default nil :family "Monaco")
+
+      ;; default font size (point * 10)
+      ;;
+      ;; WARNING!  Depending on the default font,
+      ;; if the size is not supported very well, the frame will be clipped
+      ;; so that the beginning of the buffer may not be visible correctly. 
+      (set-face-attribute 'default nil :height 180)
+
+      ;; use specific font for Korean charset.
+      ;; if you want to use different font size for specific charset,
+      ;; add :size POINT-SIZE in the font-spec.
+      (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
+      ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
+      ;; you may want to add different for other charset in this way.
+      )
+;(define-key minibuffer-local-map (kbd "s-v") 'yank)
 
 (use-package general
   :after evil
@@ -464,6 +484,9 @@
 (use-package edwina
   ;; :disabled t
   :diminish
+  :custom
+  (edwina-mfact 0.5)
+  (edwina-narrow-threshold 120)
   :config
   (setq display-buffer-base-action '(display-buffer-below-selected))
   (edwina-setup-dwm-keys 'super)

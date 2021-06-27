@@ -6,6 +6,7 @@
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 ;; 3. make edwina work with treemacs
 ;; 4. add textbunlde support
+
 (require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
@@ -26,6 +27,8 @@
 (setq straight-use-package-by-default t)
 (setq-default with-editor-emacsclient-executable "/opt/homebrew/bin/emacsclient")
 
+(use-package diminish)
+
 (use-package nano-theme
   :straight (nano-theme :type git :host github
                         :repo "rougier/nano-theme")
@@ -36,13 +39,14 @@
   (tool-bar-mode -1))
 
 (use-package nano-modeline
-  ;; :disabled t
+  :disabled t
   :straight (nano-modeline :type git :host github
                            :repo "rougier/nano-modeline")
   :config
   (nano-modeline))
 
 (use-package nano-splash
+  :disabled t
   :straight (nano-splash  :type git :host github
                           :repo "rougier/nano-splash")
   :config
@@ -80,7 +84,8 @@
         mac-option-key-is-meta t))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (scroll-bar-mode -1)
-(set-face-attribute 'default nil :font "Monaco-16")
+;; (set-face-attribute 'default nil :font "JetBrains Mono-18")
+(set-face-attribute 'default nil :font "Monaco-18") 
 ;; (set-face-attribute 'default nil :font "Menlo-16")
 ;; (define-key minibuffer-local-map (kbd "s-v") 'yank)
 
@@ -150,7 +155,8 @@
    "f" 'find-file
    "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
-   "r" 'consult-recent-file
+   "r" 'consult-register-load
+   "R" 'consult-register-store
    "d" 'dired
    ;; "D" 'ranger
    "b" 'switch-to-buffer
@@ -169,8 +175,8 @@
 
   (general-define-key
    :states '(insert normal emacs visual)
-   :keymaps 'emacs-lisp-mode-map
-   "C-<return>" 'eval-last-sexp)
+   :keymaps '(lispy-mode-map emacs-lisp-mode-map)
+   "M-<return>" 'eval-last-sexp)
 
   (general-define-key
    :states '(insert emacs)
@@ -226,45 +232,54 @@
    (evil-mode))
 
 (use-package evil-collection
+  :diminish
   ;; :disabled t
   :after evil
   :config
   (evil-collection-init))
 
 (use-package evil-commentary
+  :diminish
   :config
   (evil-commentary-mode))
 
 (use-package evil-surround
+  :diminish
   :config
   (global-evil-surround-mode 1))
 
 (use-package avy
+  :diminish
   :bind
   ("C-;" . avy-goto-char))
 
 (use-package ivy
   :disabled
+  :diminish
   :config
   (ivy-mode))
 
 (use-package selectrum
+  :diminish
   :config
   (selectrum-mode 1))
 
 (use-package selectrum-prescient
+  :diminish
   :after selectrum
   :config
   (selectrum-prescient-mode 1)
   (prescient-persist-mode 1))
 
 (use-package which-key
+  :diminish
   :config
   (which-key-mode)
   ;; (which-key-setup-minibuffer)
   )
 
 (use-package recentf
+  :diminish
   :init
   (defun recentf-open-files+ ()
     "Use `completing-read' to open a recent file."
@@ -275,10 +290,12 @@
   (recentf-mode t))
 
 (use-package key-chord
+  :diminish
   :config
   (key-chord-mode 1))
 
 (use-package cider
+  :diminish
   :after org
   :bind
   (:map clojure-mode-map
@@ -286,6 +303,7 @@
         ("C-c C-s" . cider-jack-in)))
 
 (use-package exec-path-from-shell
+  :diminish
   :if (memq window-system '(mac ns))
   :config
   ;; (setq exec-path-from-shell-arguments '("-l"))
@@ -300,10 +318,12 @@
   (setq dired-use-ls-dired nil))
 
 (use-package olivetti
+  :diminish
   :init
   (setq olivetti-body-width 80))
 
 (use-package lsp-mode
+  :diminish
   :custom
   (lsp-headerline-breadcrumb-enable nil)
   :hook
@@ -312,6 +332,7 @@
    (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
+  :diminish
   :init
   (setq lsp-ui-doc-enable nil)
   ;; (setq lsp-ui-show-hover t)
@@ -320,21 +341,55 @@
         lsp-ui-sideline-show-code-actions nil)
   )
 
-(use-package lsp-java)
+(use-package lsp-java
+    :diminish
+)
 
 (use-package company
-  :hook
-  (prog-mode . company-mode)
+  :diminish
+  :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
   :bind
-  ;; (:map company-active-map
-  ;;       ("<tab>" . company-complete-selection))
-  (:map lsp-mode-map
-        ("<tab>" . company-indent-or-complete-common))
+  (:map company-active-map
+        ("C-n"   . company-select-next)
+        ("C-p"   . company-select-previous)
+        ("C-d"   . company-show-doc-buffer)
+        ;; ("<return>" . company-complete-selection)
+        ;; ("SPC" . company-complete-selection)
+        ("<tab>" . company-complete-selection)
+        ;; :map company-mode-map
+        ;; ("<tab>" . company-indent-or-complete-common)
+        )
   :custom
-  (company-minimum-prefix-length 2)
-  (company-idle-delay 0.0))
+  (company-auto-complete t)
+  (company-minimum-prefix-length 1)
+  (company-tooltip-align-annotations t)
+  (company-require-match 'never)
+  ;; Don't use company in the following modes
+  (company-global-modes '(not shell-mode eaf-mode))
+  ;; Trigger completion immediately.
+  (company-idle-delay 0.1)
+  ;; Number the candidates (use M-1, M-2 etc to select completions).
+  (company-show-numbers t)
+  :config
+  ;; (unless clangd-p (delete 'company-clang company-backends))
+  (global-company-mode 1))
+
+;; (use-package company
+;;   :disabled t
+;;   :hook
+;;   (prog-mode . company-mode)
+;;   ;; :bind
+;;   ;; ;; (:map company-active-map
+;;   ;; ;;       ("<tab>" . company-complete-selection))
+;;   ;; (:map lsp-mode-map
+;;   ;;       ("<tab>" . company-indent-or-complete-common))
+;;   ;; :custom
+;;   ;; (company-minimum-prefix-length 2)
+;;   ;; (company-idle-delay 0.0)
+;;   )
 
 (use-package vterm
+  :diminish
   ;; :disabled t
   :init
   ;; (evil-define-key 'insert vterm-mode-map "C-u" 'vterm-send-C-u)
@@ -342,20 +397,29 @@
   (setq vterm-kill-buffer-on-exit t))
 
 (use-package paren
+  :diminish
   :config
   (show-paren-mode 1))
 
-(use-package magit)
+(use-package magit
+    :diminish
+)
 
-(use-package swift-mode)
+(use-package swift-mode
+    :diminish
+)
 
-(use-package sml-mode)
+(use-package sml-mode
+    :diminish
+)
 
 (use-package haskell-mode
+  :diminish
  :config
  (electric-pair-local-mode -1))
 
 (use-package lsp-haskell
+  :diminish
   ;; :disabled t
  :config
  ;; (add-hook 'haskell-mode-hook #'lsp)
@@ -364,6 +428,7 @@
 
 ;; !need to install ripgrep command line tool in your system
 (use-package snails
+  :diminish
   :disabled t
   :straight (snails :type git :host github :repo "manateelazycat/snails" :no-byte-compile t)
   :config
@@ -388,6 +453,7 @@
 ;; fuzzy search dependency for Snails
 ;; !needs to install Rust on your system
 (use-package fuz
+  :diminish
   :disabled t
   :straight (fuz :type git :host github :repo "rustify-emacs/fuz.el")
   :config
@@ -396,17 +462,20 @@
 
 (use-package edwina
   ;; :disabled t
+  :diminish
   :config
   (setq display-buffer-base-action '(display-buffer-below-selected))
   (edwina-setup-dwm-keys 'super)
   (edwina-mode 1))
 
 (use-package beacon
+  :diminish
   ;; :disabled t
   :config
   (beacon-mode 1))
 
 (use-package eyebrowse
+  :diminish
   :demand t
   ;; :disabled t
   :custom
@@ -421,24 +490,31 @@
   (eyebrowse-mode))
 
 (use-package dired+
+  :diminish
   :disabled t)
 
 (use-package yaml-mode
+  :diminish
   :mode ("\\.yaml\\'" "\\.yml\\'"))
 
-(use-package all-the-icons)
+(use-package all-the-icons
+    :diminish
+)
 
 (use-package treemacs-icons-dired
+  :diminish
   :disabled t
   :after treemacs dired
   :config (treemacs-icons-dired-mode))
 
 (use-package perspective
+  :diminish
   :disabled t
   :config
   (persp-mode))
 
 (use-package ranger
+  :diminish
   :disabled t
   :init
   (ranger-override-dired-mode t)
@@ -457,16 +533,22 @@
     ;; (setq debug-on-error t)
 
 (use-package rainbow-delimiters
+  :diminish
   :disabled t
   :hook
   (prog-mode . rainbow-delimiters-mode))
 
 (use-package all-the-icons-dired
+  :diminish
   :hook
-  ((dired-mode . all-the-icons-dired-mode)
+  ((dired-mode . (lambda ()
+                       (interactive)
+                       (unless (file-remote-p default-directory)
+                         (all-the-icons-dired-mode))))
    (deer-mode . all-the-icons-dired-mode)))
 
 (use-package projectile
+  :diminish
   :init
   (setq projectile-auto-discover nil)
   (setq projectile-project-root-functions
@@ -480,6 +562,7 @@
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 
 (use-package mini-frame
+  :diminish
   :disabled t
   :config
   (setq mini-frame-resize t)
@@ -509,6 +592,7 @@
 )
 
 (use-package consult
+  :diminish
   :init
   (defun consult-focus-lines-quit ()
     (interactive)
@@ -523,6 +607,7 @@
       (consult-find dir initial))))
 
 (use-package marginalia
+  :diminish
   :bind (:map minibuffer-local-map
               ("C-M-a" . marginalia-cycle)
          ;; When using the Embark package, you can bind `marginalia-cycle' as an Embark action!
@@ -550,6 +635,7 @@
 )
 
 (use-package embark
+  :diminish
   :disabled t
   :ensure t
   :bind
@@ -557,6 +643,7 @@
 
 ;; Consult users will also want the embark-consult package.
 (use-package embark-consult
+  :diminish
   :disabled t
   :ensure t
   :after (embark consult)
@@ -567,40 +654,52 @@
   (embark-collect-mode . embark-consult-preview-minor-mode))
 
 (use-package expand-region
+  :diminish
   :bind
   (("C-=" . er/expand-region)
   ("C--" . er/contract-region)))
 
-(use-package iedit)
+(use-package iedit
+    :diminish
+)
 
 (use-package flycheck
+  :diminish
   :hook
   ((prog-mode . flycheck-mode)
    (emacs-lisp-mode . (lambda () (flycheck-mode -1)))))
 
 (use-package consult-flycheck
+  :diminish
   :bind (:map flycheck-command-map
               ("!" . consult-flycheck)))
 
 (use-package flycheck-pos-tip
+  :diminish
   :disabled t
   :after
   flycheck)
 
 (use-package flycheck-inline
+  :diminish
   :disabled t
   :after
   flycheck)
 
-(use-package undo-fu)
+(use-package undo-fu
+    :diminish
+)
 
 (use-package tao-theme
+  :diminish
   ;; :config
   ;; (set-face-attribute 'default nil :height 180)
   ;; (load-theme 'tao-yang t)
   )
 
-(use-package minimal-theme)
+(use-package minimal-theme
+    :diminish
+)
 
 ;;; Install epdfinfo via 'brew install pdf-tools --HEAD' and then install the
 ;;; pdf-tools elisp via the use-package below. To upgrade the epdfinfo
@@ -609,6 +708,7 @@
 ;;; up, just do 'brew uninstall pdf-tools', wipe out the elpa
 ;;; pdf-tools package and reinstall both as at the start.
 (use-package pdf-tools
+  :diminish
   :disabled t
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
                         :fork (:host github
@@ -622,6 +722,7 @@
   (pdf-tools-install))
 
 (use-package markdown-mode
+  :diminish
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ;; ("\\.md\\'" . gfm-mode)
@@ -665,9 +766,12 @@
         ("C-<up>" . markdown-move-up)
         ("C-<down>" . markdown-move-down)))
 
-(use-package edit-indirect)
+(use-package edit-indirect
+    :diminish
+)
 
 (use-package iscroll
+  :diminish
   :disabled t
   :straight (iscroll :type git :host: github :repo "casouri/iscroll")
   :bind
@@ -678,6 +782,7 @@
         ("C-p" . iscroll-previous-line)))
 
 (use-package deft
+  :diminish
   :commands (deft deft-open-file deft-new-file-named)
   :config
   (setq deft-directory "~/Space/"
@@ -691,6 +796,7 @@
                                  (case-fn . downcase))))
 
 (use-package eshell
+  :diminish
   :init
   (defun set-eshell-prompt-path ()
     (interactive)
@@ -724,12 +830,16 @@
                      (kbd "C-n") 'eshell-next-input
                      (kbd "<down>" 'eshell-next-input)))))
 
-(use-package restclient)
+(use-package restclient
+    :diminish
+)
 
 (use-package ob-restclient
+  :diminish
   :after org)
 
 (use-package org-roam
+  :diminish
   :disabled t
   :init
   (setq org-roam-directory "~/Space/")
@@ -802,6 +912,7 @@
    "ng" 'org-roam-graph))
 
 (use-package org
+  :diminish
   :init
   (defun modi/org-entity-get-name (char)
   "Return the entity name for CHAR. For example, return \"ast\" for *."
@@ -897,6 +1008,7 @@
   (require 'ob-ruby))
 
 (use-package evil-org
+  :diminish
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
   :config
@@ -904,6 +1016,7 @@
   (evil-org-agenda-set-keys))
 
 (use-package org-ql
+  :diminish
   :disabled t
   :after org
   :init
@@ -939,6 +1052,7 @@
             )))))
 
 (use-package org-super-agenda
+  :diminish
   :disabled t
   :init
   (setq org-super-agenda-groups
@@ -963,6 +1077,7 @@
   (org-super-agenda-mode))
 
 (use-package org-download
+  :diminish
   :init
   (setq org-download-image-org-width 500)
   (setq-default org-download-image-dir "note_assets")
@@ -970,6 +1085,7 @@
   (setq org-download-method 'directory))
 
 (use-package md-roam
+  :diminish
   :disabled t
   :straight (md-roam :type git :host github :repo "nobiot/md-roam")
   :init
@@ -1069,11 +1185,13 @@ requires that the original md file has a structure of SlipBox"
       (message (concat "file " filename " copied and deleted successfully")))))
 
 (use-package geiser
+  :diminish
   :init
   (setq geiser-active-implementations '(chez Racket MIT/GNU guile))
   (setq geiser-chez-binary "chez"))
 
 (use-package electric
+  :diminish
   ;; :disabled t
   :config
   (electric-pair-mode)
@@ -1087,18 +1205,23 @@ requires that the original md file has a structure of SlipBox"
                         (,electric-pair-inhibit-predicate c)))))))
 
 (use-package org-fragtog
+  :diminish
   :hook
   (org-mode . org-fragtog-mode))
 
 (use-package w3m
+  :diminish
   :init
   (setq w3m-command "/opt/homebrew/bin/w3m"))
 
 (use-package tidal
+  :diminish
   :init
   (setq tidal-interpreter "/Users/las/.ghcup/bin/ghci"))
 
-(use-package clojure-mode)
+(use-package clojure-mode
+    :diminish
+)
 
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -1111,6 +1234,7 @@ requires that the original md file has a structure of SlipBox"
 ;;  '(window-divider-last-pixel ((t (:foreground "gray25")))))
 
 (use-package telephone-line
+  :diminish
   :disabled t
   :config
   (setq telephone-line-primary-left-separator 'telephone-line-flat
@@ -1120,6 +1244,7 @@ requires that the original md file has a structure of SlipBox"
   (telephone-line-mode 1))
 
 (use-package lispy
+  :diminish
   :hook
   ((clojure-mode . (lambda () (lispy-mode 1)))
    (emacs-lisp-mode . (lambda () (lispy-mode 1)))
@@ -1131,8 +1256,10 @@ requires that the original md file has a structure of SlipBox"
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(blink-cursor-mode nil)
+ '(company-auto-commit t nil nil "Customized with use-package company")
  '(custom-safe-themes
-   '("31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+   '("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+ '(frame-background-mode 'light)
  '(menu-bar-mode nil)
  '(show-paren-mode t)
  '(tool-bar-mode nil)
@@ -1145,24 +1272,113 @@ requires that the original md file has a structure of SlipBox"
  )
 
 (use-package dired
+  :diminish
   :straight nil
+  :init
+  (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'\\|^.DS_STORE$\\|^.projectile$\\|^.git$")
   :hook
-  (dired-mode . dired-hide-details-mode))
+  (dired-mode . dired-hide-details-mode)
+  (dired-mode . dired-omit-mode))
 
 (use-package dired-hacks-utils)
 
 (use-package dired-open
+  :diminish
   :init
   (setq dired-open-extensions '(("pdf" . "open"))))
 
 (use-package diredfl
+  :diminish
   :disabled t)
 
 (use-package dired-subtree
+  :diminish
   :init
   (setq dired-subtree-use-backgrounds nil)
   :config
   (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
-  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map))
+  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map)
+  (advice-add 'dired-subtree-toggle :after (lambda ()
+                                             (interactive)
+                                             (when all-the-icons-dired-mode
+                                               (revert-buffer))))
+  (advice-add 'dired-subtree-cycle :after (lambda ()
+                                             (interactive)
+                                             (when all-the-icons-dired-mode
+                                               (revert-buffer))))
+  )
 
-(use-package treemacs)
+(use-package treemacs
+  :diminish
+  :disabled t)
+
+(use-package dired-sidebar
+  :diminish
+  :disabled t
+  :commands (dired-sidebar-toggle-sidebar))
+
+(use-package hide-mode-line
+  :diminish
+  :hook
+  (dired-mode . hide-mode-line-mode))
+
+;; (set-face-attribute 'mode-line nil
+;;                     :background nano-dark-background
+;;                     :foreground "white"
+;;                     ;; :box '(:line-width 8 :color "#353644")
+;;                     ;; :overline nil
+;;                     ;; :underline nil
+;;                     )
+
+;; (set-face-attribute 'mode-line-inactive nil
+;;                     :background "#565063"
+;;                     :foreground "white"
+;;                     ;; :box '(:line-width 8 :color "#565063")
+;;                     :overline nil
+
+
+
+  ;; (custom-set-faces cus
+  ;;  '(mode-line ((t (:underline t))))
+  ;;  '(mode-line-inactive ((t (:underline t)))))
+(use-package simple-modeline
+  :diminish
+  :disabled t
+  :hook (after-init . simple-modeline-mode))
+
+(diminish 'auto-revert-mode)
+(diminish 'eldoc-mode)
+(diminish 'visual-line-mode)
+
+;; write a function to do the spacing
+(defun simple-mode-line-render (left right)
+  "Return a string of `window-width' length containing LEFT, and RIGHT
+ aligned respectively."
+  (let* ((available-width (- (window-width) (length left) 2)))
+    (format (format " %%s %%%ds " available-width) left right)))
+
+
+;; use the function in conjunction with :eval and format-mode-line in your mode-line-format
+(setq-default mode-line-format
+      '((:eval (simple-mode-line-render
+                ;; left
+                (format-mode-line "%b %m %*")
+                ;; right
+                (format-mode-line "%l:%c ")))))
+
+
+(set-face-attribute 'mode-line nil
+                    :background nano-light-subtle
+                    :foreground nano-light-foreground
+                    :box (list :line-width 2 :color nano-light-faded)
+                    :overline nil	
+                    :underline nil
+                    )
+
+(set-face-attribute 'mode-line-inactive nil
+                    :background nano-light-background
+                    :foreground nano-light-foreground
+                    :box (list :line-width 2 :color nano-light-subtle)
+                    :overline nil	
+                    :underline nil
+                    )

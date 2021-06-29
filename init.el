@@ -35,9 +35,42 @@
                         :repo "rougier/nano-theme")
   :config
   (load-theme 'nano t)
+  (defun setup-mode-line (dol)
+    (setq-default mode-line-format
+                  '((:eval (simple-mode-line-render
+                            ;; left
+                            (format-mode-line "%b %*")
+                            ;; (format-mode-line "%b %m %*")
+                            ;; right  
+                            (format-mode-line "%l:%c ")))))
+
+    (set-face-attribute 'mode-line nil
+                        :background (eval (intern (concat "nano-" dol "-subtle")))
+                        :foreground (eval (intern (concat "nano-" dol "-foreground")))
+                        :box (list :line-width 2 :color (eval (intern (concat "nano-" dol "-faded"))))
+                        :overline nil	
+                        :underline nil)
+
+    (set-face-attribute 'mode-line-inactive nil
+                        :background (eval (intern (concat "nano-" dol "-background")))
+                        :foreground (eval (intern (concat "nano-" dol "-foreground")))
+                        :box (list :line-width 2 :color (eval (intern (concat "nano-" dol "-subtle"))))
+                        :overline nil	
+                        :underline nil))
+  (defun polish@nano-light (old-fn &rest args)
+    (apply old-fn args)
+    (setup-mode-line "light")
+    (set-face-attribute 'default nil :font "pragmatapro mono liga-20"))
+  (defun polish@nano-dark (old-fn &rest args)
+    (apply old-fn args)
+    (setup-mode-line "dark")
+    (set-face-attribute 'default nil :font "pragmatapro mono liga-20"))
+  (advice-add 'nano-light :around 'polish@nano-light)
+  (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
   (nano-setup)
-  (tool-bar-mode -1))
+  (tool-bar-mode -1)
+  )
 
 (use-package nano-modeline
   :disabled t
@@ -83,7 +116,7 @@
   (setq mac-option-modifier 'meta
         mac-command-modifier 'super
         mac-option-key-is-meta t))
-(add-to-list 'default-frame-alist '(fullscreen . maximized))
+;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 (scroll-bar-mode -1)
 ;; (add-to-list 'default-frame-alist '(font . "Monaco-18"))
 ;; (set-face-attribute 'default nil :font "JetBrains Mono-18")
@@ -95,7 +128,8 @@
       (mac-auto-operator-composition-mode))
 
   ;; default Latin font (e.g. Consolas)
-      (set-face-attribute 'default nil :font "Fira Code-19")
+  ;; (set-face-attribute 'default nil :font "sf mono-20")
+  (set-face-attribute 'default nil :font "pragmatapro mono liga-20")
       ;; default font size (point * 10)
       ;; 
       ;; WARNING!  Depending on the default font,
@@ -124,8 +158,8 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    ;; "s-t" 'vterm-other-window
+   ;; "s-t" 'eshell-other-window
    "s-;" 'eval-expression
-   "s-t" 'eshell-other-window
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
    "s-v" 'yank
@@ -138,8 +172,7 @@
    "s-q" 'save-buffers-kill-terminal
    "s-=" 'text-scale-increase
    "s--" 'text-scale-decrease
-   "s-0" 'text-scale-set
-	)
+   "s-0" 'text-scale-set)
 
   (general-define-key
    :keymaps 'minibuffer-local-map
@@ -199,7 +232,7 @@
   (general-define-key
    :states '(insert normal emacs visual)
    :keymaps '(lispy-mode-map emacs-lisp-mode-map)
-   "M-<return>" 'eval-last-sexp)
+   "C-<return>" 'eval-last-sexp)
 
   (general-define-key
    :states '(insert emacs)
@@ -487,7 +520,7 @@
   ;; :disabled t
   :diminish
   :custom
-  (edwina-mfact 0.5)
+  (edwina-mfact 0.55)
   (edwina-narrow-threshold 115)
   :config
   (setq display-buffer-base-action '(display-buffer-below-selected))
@@ -498,7 +531,9 @@
   :diminish
   ;; :disabled t
   :config
-  (beacon-mode 1))
+  (beacon-mode 1)
+  (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
+          '(vterm-mode shell-mode eshell-mode term-mode))))
 
 (use-package eyebrowse
   :diminish
@@ -834,12 +869,12 @@
       (if (equal home prefix)
           (if (equal home pwd) "~" (concat "~/" rest))
         pwd)))
-  (setq eshell-prompt-function
-        (lambda nil
-          (concat
-           "\n"
-           (set-eshell-prompt-path)
-           "\nλ ")))
+  ;; (setq eshell-prompt-function
+  ;;       (lambda nil
+  ;;         (concat
+  ;;          "\n"
+  ;;          (set-eshell-prompt-path)
+  ;;          "\nλ ")))
   (defun eshell-other-window ()
     "Open a `shell' in a new window."
     (interactive)
@@ -1270,6 +1305,7 @@ requires that the original md file has a structure of SlipBox"
   (telephone-line-mode 1))
 
 (use-package lispy
+  :disabled t
   :diminish
   :hook
   ((clojure-mode . (lambda () (lispy-mode 1)))

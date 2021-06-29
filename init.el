@@ -1384,27 +1384,11 @@ requires that the original md file has a structure of SlipBox"
     (format (format " %%s %%%ds " available-width) left right)))
 
 
-;; use the function in conjunction with :eval and format-mode-line in your mode-line-format
-(setq-default mode-line-format
-      '((:eval (simple-mode-line-render
-                ;; left
-                (format-mode-line "%b %m %*")
-                ;; right
-                (format-mode-line "%l:%c ")))))
 
 
-(set-face-attribute 'mode-line nil
-                    :background nano-light-subtle
-                    :foreground nano-light-foreground
-                    :box (list :line-width 2 :color nano-light-faded)
-                    :overline nil	
-                    :underline nil
-                    )
-
-(set-face-attribute 'mode-line-inactive nil
-                    :background nano-light-background
-                    :foreground nano-light-foreground
-                    :box (list :line-width 2 :color nano-light-subtle)
-                    :overline nil	
-                    :underline nil
-                    )
+(use-package shell-pop
+  :custom
+  (shell-pop-shell-type '("vterm" "vterm" (lambda nil (vterm))))
+  (shell-pop-universal-key "s-t")
+  :hook
+  (shell-pop-in-after . (lambda () (edwina-arrange))))

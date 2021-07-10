@@ -1521,6 +1521,5 @@ requires that the original md file has a structure of SlipBox"
 (use-package progress-bar
   :straight (:repo "BeneathCloud/progress-bar"))
 
-;; (use-package org-devonthink
-;;     :straight (org-devonthink :type git :host github
-;;                           :repo "jwiegley/dot-emacs/lisp"))
+(use-package org-devonthink
+  :straight (:repo "BeneathCloud/org-devonthink"))

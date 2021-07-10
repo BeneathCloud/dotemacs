@@ -1,7 +1,5 @@
 ;;-*- lexical-binding: t -*-
-
 ; TODO
-
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 ;; 3. make edwina work with treemacs
@@ -10,7 +8,7 @@
 (require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
-(setq straight-disable-native-compile t)
+;; (setq straight-disable-native-compile t)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
@@ -68,6 +66,7 @@
   (advice-add 'nano-light :around 'polish@nano-light)
   (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
+  ;; (nano-dark)
   (nano-setup)
   (tool-bar-mode -1)
   )
@@ -159,6 +158,12 @@
    :keymaps 'override
    ;; "s-t" 'vterm-other-window
    ;; "s-t" 'eshell-other-window
+   "s-u" 'update-progress-bar-at-point
+   "s-y" 'backward-progress-bar-at-point
+   "s-i" 'forward-progress-bar-at-point
+   "s-[" 'previous-buffer
+   "s-]" 'next-buffer
+   "s-f" 'consult-line
    "s-;" 'eval-expression
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
@@ -184,6 +189,8 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "nb" 'org-roam-buffer-toggle
+   "nn" 'org-roam-node-find
    ";" 'eval-expression
    "'s" 'consult-register-store
    "'l" 'consult-register-load
@@ -232,7 +239,7 @@
   (general-define-key
    :states '(insert normal emacs visual)
    :keymaps '(lispy-mode-map emacs-lisp-mode-map)
-   "C-<return>" 'eval-last-sexp)
+   "M-<return>" 'eval-last-sexp)
 
   (general-define-key
    :states '(insert emacs)
@@ -306,11 +313,27 @@
 
 (use-package avy
   :diminish
+  :after flyspell
   :bind
-  ("C-;" . avy-goto-char))
+  ("C-'" . avy-goto-char))
+
+(use-package prescient
+  :config
+  (prescient-persist-mode 1))
+
+(use-package ivy-prescient
+  :disabled t
+  :after ivy
+  :config
+  (ivy-prescient-mode 1))
+
+(use-package company-prescient
+  :after company
+  :config
+  (company-prescient-mode 1))
 
 (use-package ivy
-  :disabled
+  :disabled t
   :diminish
   :config
   (ivy-mode))
@@ -324,8 +347,7 @@
   :diminish
   :after selectrum
   :config
-  (selectrum-prescient-mode 1)
-  (prescient-persist-mode 1))
+  (selectrum-prescient-mode 1))
 
 (use-package which-key
   :diminish
@@ -355,7 +377,7 @@
   :after org
   :bind
   (:map clojure-mode-map
-        ("C-<return>" . cider-eval-last-sexp)
+        ("M-<return>" . cider-eval-last-sexp)
         ("C-c C-s" . cider-jack-in)))
 
 (use-package exec-path-from-shell
@@ -405,15 +427,16 @@
   :diminish
   :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
   :bind
-  (:map company-active-map
-        ("C-n"   . company-select-next)
-        ("C-p"   . company-select-previous)
-        ("C-d"   . company-show-doc-buffer)
-        ;; ("<return>" . company-complete-selection)
-        ;; ("SPC" . company-complete-selection)
-        ("<tab>" . company-complete-selection)
-        ;; :map company-mode-map
-        ;; ("<tab>" . company-indent-or-complete-common)
+  (:map
+        company-active-map
+        ;; ("C-n"   . company-select-next)
+        ;; ("C-p"   . company-select-previous)
+        ;; ("C-d"   . company-show-doc-buffer)
+        ;; ;; ("<return>" . company-complete-selection)
+        ;; ;; ("SPC" . company-complete-selection)
+        ;; ("<tab>" . company-complete-selection)
+        :map company-mode-map
+        ("<tab>" . company-indent-or-complete-common)
         )
   :custom
   (company-auto-complete t)
@@ -421,14 +444,17 @@
   (company-tooltip-align-annotations t)
   (company-require-match 'never)
   ;; Don't use company in the following modes
-  (company-global-modes '(not shell-mode eaf-mode))
+  (company-global-modes '(not shell-mode eaf-mode org-mode))
   ;; Trigger completion immediately.
   (company-idle-delay 0.1)
   ;; Number the candidates (use M-1, M-2 etc to select completions).
   (company-show-numbers t)
   :config
   ;; (unless clangd-p (delete 'company-clang company-backends))
-  (global-company-mode 1))
+  (global-company-mode 1)
+  ;; (add-to-list 'company-backends 'company-yasnippet)
+  )
+
 
 ;; (use-package company
 ;;   :disabled t
@@ -974,7 +1000,11 @@
 
 (use-package org
   :diminish
+  :hook
+  (org-mode . org-num-mode)
   :init
+  (setq org-display-remote-inline-images 'cache)
+  (setq org-latex-create-formula-image-program 'dvisvgm)
   (defun modi/org-entity-get-name (char)
   "Return the entity name for CHAR. For example, return \"ast\" for *."
   (let ((ll (append org-entities-user
@@ -1326,12 +1356,6 @@ requires that the original md file has a structure of SlipBox"
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(tooltip-mode nil))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
 
 (use-package dired
   :diminish
@@ -1428,3 +1452,75 @@ requires that the original md file has a structure of SlipBox"
   (shell-pop-universal-key "s-t")
   :hook
   (shell-pop-in-after . (lambda () (edwina-arrange))))
+
+(use-package yasnippet
+  :config
+  (yas-global-mode 1))
+
+(use-package yasnippet-snippets
+  :after yasnippet)
+
+(use-package flyspell
+  :init
+    (setq ispell-program-name "aspell")
+;; You could add extra option "--camel-case" for since Aspell 0.60.8 
+;; @see https://github.com/redguardtoo/emacs.d/issues/796
+  (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
+
+(use-package wucuo
+  :init
+  (setq wucuo-spell-check-buffer-predicate
+      (lambda ()
+        (not (memq major-mode
+                   '(dired-mode
+                     log-edit-mode
+                     compilation-mode
+                     help-mode
+                     profiler-report-mode
+                     speedbar-mode
+                     gud-mode
+                     calc-mode
+                     Info-mode)))))
+  :hook
+  (prog-mode . wucuo-start)
+  (text-mode . wucuo-start)
+)
+  
+(use-package org-roam
+  :straight (org-roam :type git :host github :repo "org-roam/org-roam" :branch "v2")
+  :init
+  (defun org-hide-properties ()
+    "Hide all org-mode headline property drawers in buffer. Could be slow if it has a lot of overlays."
+    (interactive)
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward
+              "^ *:properties:\n\\( *:.+?:.*\n\\)+ *:end:\n" nil t)
+        (let ((ov_this (make-overlay (match-beginning 0) (match-end 0))))
+          (overlay-put ov_this 'display "")
+          (overlay-put ov_this 'hidden-prop-drawer t))))
+    (put 'org-toggle-properties-hide-state 'state 'hidden))
+
+  (defun org-show-properties ()
+    "Show all org-mode property drawers hidden by org-hide-properties."
+    (interactive)
+    (remove-overlays (point-min) (point-max) 'hidden-prop-drawer t)
+    (put 'org-toggle-properties-hide-state 'state 'shown))
+
+  (defun org-toggle-properties ()
+    "Toggle visibility of property drawers."
+    (interactive)
+    (if (eq (get 'org-toggle-properties-hide-state 'state) 'hidden)
+        (org-show-properties)
+      (org-hide-properties)))
+  :custom
+  (org-roam-directory "~/Space/Data/Org Roam/")
+  :config
+  (org-roam-setup))
+
+(use-package progress-bar
+  :straight (:repo "BeneathCloud/progress-bar"))
+
+;; (use-package org-devonthink
+;;     :straight (org-devonthink :type git :host github
+;;                           :repo "jwiegley/dot-emacs/lisp"))

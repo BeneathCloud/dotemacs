@@ -1,5 +1,5 @@
 ;;-*- lexical-binding: t -*-
-; TODO
+;; TODO
 ;; 2. remove system tool dependencies like Rust, ripgrep
 ;;    - add a new backend for Snails.el using selectrum for fuzzing search
 ;; 3. make edwina work with treemacs
@@ -8,7 +8,7 @@
 (require 'cl)
 ;; straght.el
 (defvar bootstrap-version)
-;; (setq straight-disable-native-compile t)
+(setq straight-disable-native-compile t)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
       (bootstrap-version 5))
@@ -24,7 +24,10 @@
 
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
-(setq-default with-editor-emacsclient-executable "/opt/homebrew/bin/emacsclient")
+(setq-default with-editor-emacsclient-executable 
+              "/opt/homebrew/Cellar/emacs-mac/emacs-27.2-mac-8.2/bin/emacsclient")
+;; (setq-default with-editor-emacsclient-executable 
+;;               (shell-command-to-string "which emacsclient"))
 
 (use-package diminish)
 
@@ -129,21 +132,22 @@
   ;; default Latin font (e.g. Consolas)
   ;; (set-face-attribute 'default nil :font "sf mono-20")
   (set-face-attribute 'default nil :font "pragmatapro mono liga-20")
-      ;; default font size (point * 10)
-      ;; 
-      ;; WARNING!  Depending on the default font,
-      ;; if the size is not supported very well, the frame will be clipped
-      ;; so that the beginning of the buffer may not be visible correctly. 
-      ;; (set-face-attribute 'default nil :height 180)
+  ;; default font size (point * 10)
+  ;; 
+  ;; WARNING!  Depending on the default font,
+  ;; if the size is not supported very well, the frame will be clipped
+  ;; so that the beginning of the buffer may not be visible correctly. 
+  ;; (set-face-attribute 'default nil :height 180)
 
-      ;; use specific font for Korean charset.
-      ;; if you want to use different font size for specific charset,
-      ;; add :size POINT-SIZE in the font-spec.
-      (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
-      ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
-      ;; you may want to add different for other charset in this way.
-      )
-;(define-key minibuffer-local-map (kbd "s-v") 'yank)
+  ;; use specific font for Korean charset.
+  ;; if you want to use different font size for specific charset,
+  ;; add :size POINT-SIZE in the font-spec.
+  (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
+  ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
+  ;; you may want to add different for other charset in this way.
+  )
+                                        ;(define-key minibuffer-local-map (kbd "s-v") 'yank)
+(setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
 
 (use-package general
   :after evil
@@ -161,8 +165,10 @@
    "s-u" 'update-progress-bar-at-point
    "s-y" 'backward-progress-bar-at-point
    "s-i" 'forward-progress-bar-at-point
-   "s-[" 'previous-buffer
-   "s-]" 'next-buffer
+   ;; "s-[" 'previous-buffer
+   ;; "s-]" 'next-buffer
+   "s-[" 'winner-undo
+   "s-]" 'winner-redo
    "s-f" 'consult-line
    "s-;" 'eval-expression
    "s-o" 'delete-other-windows
@@ -177,7 +183,7 @@
    "s-q" 'save-buffers-kill-terminal
    "s-=" 'text-scale-increase
    "s--" 'text-scale-decrease
-   "s-0" 'text-scale-set)
+   "s-0" 'text-scale-mode)
 
   (general-define-key
    :keymaps 'minibuffer-local-map
@@ -191,6 +197,10 @@
    :keymaps 'override
    "nb" 'org-roam-buffer-toggle
    "nn" 'org-roam-node-find
+   "ni" 'org-roam-node-insert
+   "ng" 'org-roam-graph
+   "nc" 'org-roam-capture 
+   "nj" 'org-roam-dailies-capture-today
    ";" 'eval-expression
    "'s" 'consult-register-store
    "'l" 'consult-register-load
@@ -216,11 +226,13 @@
    "pa" 'projectile-add-known-project
    "pf" 'projectile-find-file
    "f" 'find-file
+   "F" (lambda () (interactive) (shell-command (concat "open -R " (buffer-name))))
    "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
    "r" 'consult-register-load
    "R" 'consult-register-store
    "d" 'dired
+   "D" (lambda () (interactive) (shell-command "open ."))
    ;; "D" 'ranger
    "b" 'switch-to-buffer
    "S" 'im/search-rg+
@@ -268,31 +280,19 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    "M-SPC" 'consult-buffer)
-  (general-define-key
-   :states '(normal visual insert emacs)
-   :keymaps 'eyebrowse-mode-map
-   "s-1" 'eyebrowse-switch-to-window-config-1
-   "s-2" 'eyebrowse-switch-to-window-config-2
-   "s-3" 'eyebrowse-switch-to-window-config-3
-   "s-4" 'eyebrowse-switch-to-window-config-4
-   "s-5" 'eyebrowse-switch-to-window-config-5
-   "s-<up>" 'eyebrowse-close-window-config
-   "s-<down>" 'eyebrowse-rename-window-config
-   "s-<left>" 'eyebrowse-prev-window-config
-   "s-<right>" 'eyebrowse-next-window-config)
   )
 
- (use-package evil
-   :init
-   (setq evil-undo-system 'undo-fu)
-   (setq evil-want-keybinding nil)
-   (setq evil-want-C-u-scroll t)
-   :config
-   (evil-global-set-key 'insert (kbd "C-n") 'next-line)
-   (evil-global-set-key 'insert (kbd "C-p") 'previous-line)
-   (evil-global-set-key 'normal (kbd "C-n") 'evil-next-visual-line)
-   (evil-global-set-key 'normal (kbd "C-p") 'evil-previous-visual-line)
-   (evil-mode))
+(use-package evil
+  :init
+  (setq evil-undo-system 'undo-fu)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  :config
+  (evil-global-set-key 'insert (kbd "C-n") 'next-line)
+  (evil-global-set-key 'insert (kbd "C-p") 'previous-line)
+  (evil-global-set-key 'normal (kbd "C-n") 'evil-next-visual-line)
+  (evil-global-set-key 'normal (kbd "C-p") 'evil-previous-visual-line)
+  (evil-mode))
 
 (use-package evil-collection
   :diminish
@@ -420,24 +420,24 @@
   )
 
 (use-package lsp-java
-    :diminish
-)
+  :diminish
+  )
 
 (use-package company
   :diminish
   :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
   :bind
   (:map
-        company-active-map
-        ;; ("C-n"   . company-select-next)
-        ;; ("C-p"   . company-select-previous)
-        ;; ("C-d"   . company-show-doc-buffer)
-        ;; ;; ("<return>" . company-complete-selection)
-        ;; ;; ("SPC" . company-complete-selection)
-        ;; ("<tab>" . company-complete-selection)
-        :map company-mode-map
-        ("<tab>" . company-indent-or-complete-common)
-        )
+   company-active-map
+   ;; ("C-n"   . company-select-next)
+   ;; ("C-p"   . company-select-previous)
+   ;; ("C-d"   . company-show-doc-buffer)
+   ;; ;; ("<return>" . company-complete-selection)
+   ;; ;; ("SPC" . company-complete-selection)
+   ;; ("<tab>" . company-complete-selection)
+   :map company-mode-map
+   ("<tab>" . company-indent-or-complete-common)
+   )
   :custom
   (company-auto-complete t)
   (company-minimum-prefix-length 1)
@@ -484,29 +484,29 @@
   (show-paren-mode 1))
 
 (use-package magit
-    :diminish
-)
+  :diminish
+  )
 
 (use-package swift-mode
-    :diminish
-)
+  :diminish
+  )
 
 (use-package sml-mode
-    :diminish
-)
+  :diminish
+  )
 
 (use-package haskell-mode
   :diminish
- :config
- (electric-pair-local-mode -1))
+  :config
+  (electric-pair-local-mode -1))
 
 (use-package lsp-haskell
   :diminish
   ;; :disabled t
- :config
- ;; (add-hook 'haskell-mode-hook #'lsp)
- ;; (add-hook 'haskell-literate-mode-hook #'lsp)
- )
+  :config
+  ;; (add-hook 'haskell-mode-hook #'lsp)
+  ;; (add-hook 'haskell-literate-mode-hook #'lsp)
+  )
 
 ;; !need to install ripgrep command line tool in your system
 (use-package snails
@@ -517,17 +517,17 @@
   (add-to-list 'evil-emacs-state-modes 'snails-mode)
   (setq snails-prefix-backends
         '((">"
-          '(snails-backend-command))
-         ("@"
-          '(snails-backend-imenu))
-         ("#"
-          '(snails-backend-current-buffer))
-         ("!"
-          '(snails-backend-rg))
-         ("^"
-          '(snails-backend-mdfind))
-         ("?"
-          '(snails-backend-mdfind snails-backend-projectile snails-backend-fd snails-backend-everything))))
+           '(snails-backend-command))
+          ("@"
+           '(snails-backend-imenu))
+          ("#"
+           '(snails-backend-current-buffer))
+          ("!"
+           '(snails-backend-rg))
+          ("^"
+           '(snails-backend-mdfind))
+          ("?"
+           '(snails-backend-mdfind snails-backend-projectile snails-backend-fd snails-backend-everything))))
   (setq snails-default-backends
         '(snails-backend-buffer
           snails-backend-recentf
@@ -559,7 +559,9 @@
   :config
   (beacon-mode 1)
   (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
-          '(vterm-mode shell-mode eshell-mode term-mode))))
+                                              '(vterm-mode shell-mode eshell-mode term-mode)))
+  (add-hook 'beacon-dont-blink-predicates
+            (lambda () (bound-and-true-p org-tree-slide-mode))))
 
 (use-package eyebrowse
   :diminish
@@ -567,6 +569,18 @@
   ;; :disabled t
   :custom
   (eyebrowse-wrap-around t)
+  :bind
+  (:map
+   eyebrowse-mode-map
+   ("s-1" . 'eyebrowse-switch-to-window-config-1)
+   ("s-2" . 'eyebrowse-switch-to-window-config-2)
+   ("s-3" . 'eyebrowse-switch-to-window-config-3)
+   ("s-4" . 'eyebrowse-switch-to-window-config-4)
+   ("s-5" . 'eyebrowse-switch-to-window-config-5)
+   ("s-<up>" . 'eyebrowse-close-window-config)
+   ("s-<down>" . 'eyebrowse-rename-window-config)
+   ("s-<left>" . 'eyebrowse-prev-window-config)
+   ("s-<right>" . 'eyebrowse-next-window-config))
   :hook
   ((eyebrowse-post-window-switch . get-eyebrowse-status)
    (eyebrowse-post-window-delete . get-eyebrowse-status))
@@ -585,8 +599,8 @@
   :mode ("\\.yaml\\'" "\\.yml\\'"))
 
 (use-package all-the-icons
-    :diminish
-)
+  :diminish
+  )
 
 (use-package treemacs-icons-dired
   :diminish
@@ -617,7 +631,7 @@
   ;;  ;(after-change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode nil))))
   ;; )
   )
-    ;; (setq debug-on-error t)
+;; (setq debug-on-error t)
 
 (use-package rainbow-delimiters
   :diminish
@@ -629,9 +643,9 @@
   :diminish
   :hook
   ((dired-mode . (lambda ()
-                       (interactive)
-                       (unless (file-remote-p default-directory)
-                         (all-the-icons-dired-mode))))
+                   (interactive)
+                   (unless (file-remote-p default-directory)
+                     (all-the-icons-dired-mode))))
    (deer-mode . all-the-icons-dired-mode)))
 
 (use-package projectile
@@ -676,7 +690,7 @@
   ;;                                      to))
   ;;                              args)))))
   ;; (apply f args)))
-)
+  )
 
 (use-package consult
   :diminish
@@ -697,10 +711,10 @@
   :diminish
   :bind (:map minibuffer-local-map
               ("C-M-a" . marginalia-cycle)
-         ;; When using the Embark package, you can bind `marginalia-cycle' as an Embark action!
-         ;;:map embark-general-map
-         ;;     ("A" . marginalia-cycle)
-        )
+              ;; When using the Embark package, you can bind `marginalia-cycle' as an Embark action!
+              ;;:map embark-general-map
+              ;;     ("A" . marginalia-cycle)
+              )
 
   ;; The :init configuration is always executed (Not lazy!)
   :init
@@ -719,7 +733,7 @@
   ;; Note that there is the command `marginalia-cycle' to
   ;; switch between the annotators.
   ;; (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
-)
+  )
 
 (use-package embark
   :diminish
@@ -744,11 +758,11 @@
   :diminish
   :bind
   (("C-=" . er/expand-region)
-  ("C--" . er/contract-region)))
+   ("C--" . er/contract-region)))
 
 (use-package iedit
-    :diminish
-)
+  :diminish
+  )
 
 (use-package flycheck
   :diminish
@@ -774,8 +788,8 @@
   flycheck)
 
 (use-package undo-fu
-    :diminish
-)
+  :diminish
+  )
 
 (use-package tao-theme
   :diminish
@@ -785,8 +799,8 @@
   )
 
 (use-package minimal-theme
-    :diminish
-)
+  :diminish
+  )
 
 ;;; Install epdfinfo via 'brew install pdf-tools --HEAD' and then install the
 ;;; pdf-tools elisp via the use-package below. To upgrade the epdfinfo
@@ -798,14 +812,14 @@
   :diminish
   :disabled t
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
-                        :fork (:host github
-                                     :repo "flatwhatson/pdf-tools"))
+                       :fork (:host github
+                                    :repo "flatwhatson/pdf-tools"))
   :init
   (setq pdf-view-use-scaling t)
   :config
   (custom-set-variables
-    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
-   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
+   '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
+  (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
   (pdf-tools-install))
 
 (use-package markdown-mode
@@ -814,7 +828,7 @@
          ("\\.md\\'" . markdown-mode)
          ;; ("\\.md\\'" . gfm-mode)
          ("\\.markdown\\'" . markdown-mode))
-         ;; ("\\.markdown\\'" . gfm-mode))
+  ;; ("\\.markdown\\'" . gfm-mode))
   :hook
   (markdown-mode . variable-pitch-mode)
   (markdown-mode . (lambda ()
@@ -830,10 +844,10 @@
     (setq markdown-header-scaling t)
     (markdown-update-header-faces t  '(1.3 1.2 1.1 1.0 1.0 1.0)))
   (setq markdown-xhtml-header-content
-      (concat "<script type=\"text/javascript\" async"
-              " src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/"
-              "2.7.1/MathJax.js?config=TeX-MML-AM_CHTML\">"
-              "</script>"))
+        (concat "<script type=\"text/javascript\" async"
+                " src=\"https://cdnjs.cloudflare.com/ajax/libs/mathjax/"
+                "2.7.1/MathJax.js?config=TeX-MML-AM_CHTML\">"
+                "</script>"))
   (setq markdown-command "multimarkdown")
   (setq markdown-asymmetric-header t)
   (setq markdown-indent-on-enter 'indent-and-new-item)
@@ -854,8 +868,8 @@
         ("C-<down>" . markdown-move-down)))
 
 (use-package edit-indirect
-    :diminish
-)
+  :diminish
+  )
 
 (use-package iscroll
   :diminish
@@ -918,141 +932,80 @@
                      (kbd "<down>" 'eshell-next-input)))))
 
 (use-package restclient
-    :diminish
-)
+  :diminish
+  )
 
 (use-package ob-restclient
   :diminish
   :after org)
 
-(use-package org-roam
-  :diminish
-  :disabled t
+(use-package plantuml-mode
+  :after org
   :init
-  (setq org-roam-directory "~/Space/")
-  (setq org-roam-para-dirs 
-        (mapcar (lambda (arg) (concat org-roam-directory arg))
-                '("Projects" "Areas" "Resources" "Archives")))
-  (setq org-roam-tag-sources '(all-directories prop))
-  (setq org-roam-dailies-directory (concat org-roam-directory "Areas/Daily/"))
-  (setq org-roam-dailies-capture-templates
-      '(("d" "default" entry
-         #'org-roam-capture--get-point
-         "* %?"
-         :file-name "Areas/Daily/%<%Y-%m-%d>"
-         :head "#+title: %<%Y-%m-%d>\n\n* Today\n\n")))
-  (setq org-roam-capture-templates
-        '(("l" "literature" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_key: %^{PROMPT}\n#+roam_tags: literature growing\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("d" "style literature" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "Areas/搭配/style_at_%<%Y%m%d%H%M%S>"
-     :head "#+roam_alias: \n#+roam_key:\n#+roam_tags: literature\n\n* style_at_%<%Y%m%d%H%M%S>\n\n"
-     :unnarrowed t)
-          ("p" "permanent" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "Permanents/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: permanent\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("s" "subnent" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: subnent\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("o" "output" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: output growing\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("e" "excerpt" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: excerpt\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("f" "fleet" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: fleet growing\n\n* ${title}\n\n"
-     :unnarrowed t)
-          ("g" "log" plain (function org-roam--capture-get-point)
-     "%?"
-     :file-name "%(read-directory-name \"dir:\" org-roam-directory)/%<%Y%m%d%H%M%S>-${slug}"
-     :head "#+roam_alias: \n#+roam_tags: log\n\n* ${title}\n\n"
-     :unnarrowed t)))
-  :general
-  (:prefix "SPC"
-   :states '(normal visual)
-   :keymaps 'override
-   "nt" 'org-roam-dailies-find-today
-   "nT" 'org-roam-dailies-find-directory
-   "nd" 'deft
-   "nD" (lambda () (interactive) (dired org-roam-directory))
-   "nn" 'org-roam-find-file
-   "ni" 'org-roam-insert
-   ;; "nij" 'my-insert-jpg-from-clipboard
-   ;; "nig" 'my-insert-gif-from-clipboard
-   "nI" 'org-roam-insert-immediate
-   "nl" 'org-roam
-   "ng" 'org-roam-graph))
+  (setq org-plantuml-jar-path "/opt/homebrew/Cellar/plantuml/1.2021.8/libexec/plantuml.jar")
+  (setq org-plantuml-default-exec-mode 'jar)
+  (add-to-list
+  'org-src-lang-modes '("plantuml" . plantuml)))
 
 (use-package org
   :diminish
-  :hook
-  (org-mode . org-num-mode)
+  ;; :hook
+  ;; (org-mode . org-num-mode)
   :init
+  (setq org-latex-compiler "lualatex")
+  (setq org-export-preserve-breaks t)
+  (setq org-ditaa-jar-path "/opt/homebrew/Cellar/ditaa/0.11.0_1/libexec/ditaa-0.11.0-standalone.jar")
+  (setq org-latex-inputenc-alist '(("utf8" . "utf8x")))
   (setq org-display-remote-inline-images 'cache)
   (setq org-latex-create-formula-image-program 'dvisvgm)
   (defun modi/org-entity-get-name (char)
-  "Return the entity name for CHAR. For example, return \"ast\" for *."
-  (let ((ll (append org-entities-user
-                    org-entities))
-        e name utf8)
-    (catch 'break
-      (while ll
-        (setq e (pop ll))
-        (when (not (stringp e))
-          (setq utf8 (nth 6 e))
-          (when (string= char utf8)
-            (setq name (car e))
-            (throw 'break name)))))))
+    "Return the entity name for CHAR. For example, return \"ast\" for *."
+    (let ((ll (append org-entities-user
+                      org-entities))
+          e name utf8)
+      (catch 'break
+        (while ll
+          (setq e (pop ll))
+          (when (not (stringp e))
+            (setq utf8 (nth 6 e))
+            (when (string= char utf8)
+              (setq name (car e))
+              (throw 'break name)))))))
 
-(defun modi/org-insert-org-entity-maybe (&rest args)
-  "When the universal prefix C-u is used before entering any character,
+  (defun modi/org-insert-org-entity-maybe (&rest args)
+    "When the universal prefix C-u is used before entering any character,
     insert the character's `org-entity' name if available.
 
     If C-u prefix is not used and if `org-entity' name is not available, the
     returned value `entity-name' will be nil."
-  ;; It would be fine to use just (this-command-keys) instead of
-  ;; (substring (this-command-keys) -1) below in emacs 25+.
-  ;; But if the user pressed "C-u *", then
-  ;;  - in emacs 24.5, (this-command-keys) would return "^U*", and
-  ;;  - in emacs 25.x, (this-command-keys) would return "*".
-  ;; But in both versions, (substring (this-command-keys) -1) will return
-  ;; "*", which is what we want.
-  ;; http://thread.gmane.org/gmane.emacs.orgmode/106974/focus=106996
-  (let ((pressed-key (substring (this-command-keys) -1))
-        entity-name)
-    (when (and (listp args) (eq 4 (car args)))
-      (setq entity-name (modi/org-entity-get-name pressed-key))
-      (when entity-name
-        (setq entity-name (concat "\\" entity-name "{}"))
-        (insert entity-name)
-        (message (concat "Inserted `org-entity' "
-                         (propertize entity-name
-                                     'face 'font-lock-function-name-face)
-                         " for the symbol "
-                         (propertize pressed-key
-                                     'face 'font-lock-function-name-face)
-                         "."))))
-    entity-name))
+    ;; It would be fine to use just (this-command-keys) instead of
+    ;; (substring (this-command-keys) -1) below in emacs 25+.
+    ;; But if the user pressed "C-u *", then
+    ;;  - in emacs 24.5, (this-command-keys) would return "^U*", and
+    ;;  - in emacs 25.x, (this-command-keys) would return "*".
+    ;; But in both versions, (substring (this-command-keys) -1) will return
+    ;; "*", which is what we want.
+    ;; http://thread.gmane.org/gmane.emacs.orgmode/106974/focus=106996
+    (let ((pressed-key (substring (this-command-keys) -1))
+          entity-name)
+      (when (and (listp args) (eq 4 (car args)))
+        (setq entity-name (modi/org-entity-get-name pressed-key))
+        (when entity-name
+          (setq entity-name (concat "\\" entity-name "{}"))
+          (insert entity-name)
+          (message (concat "Inserted `org-entity' "
+                           (propertize entity-name
+                                       'face 'font-lock-function-name-face)
+                           " for the symbol "
+                           (propertize pressed-key
+                                       'face 'font-lock-function-name-face)
+                           "."))))
+      entity-name))
 
-;; Run `org-self-insert-command' only if `modi/org-insert-org-entity-maybe'
-;; returns nil.
-(advice-add 'org-self-insert-command :before-until #'modi/org-insert-org-entity-maybe)
-(setq org-pretty-entities t)
+  ;; Run `org-self-insert-command' only if `modi/org-insert-org-entity-maybe'
+  ;; returns nil.
+  (advice-add 'org-self-insert-command :before-until #'modi/org-insert-org-entity-maybe)
+  (setq org-pretty-entities t)
   (setq org-image-actual-width nil)
   (defun my/get-one-layer-subdirs (bases)
     (flatten-list
@@ -1073,22 +1026,25 @@
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
   (setq org-todo-keywords
-      '((sequence "TODO(t)" "|" "DONE(d)" "DELEGATED(D)")))
+        '((sequence "TODO(t)" "|" "DONE(d)" "DELEGATED(D)")))
   (setq org-tag-alist '(("flag" . ?f)))
   (setq org-log-done 'time)
   ;; (setq org-agenda-files
-        ;; (my/get-one-layer-subdirs org-roam-para-dirs))
+  ;; (my/get-one-layer-subdirs org-roam-para-dirs))
   ;; don't show deadline befeore scheduled day
   (setq org-agenda-skip-deadline-prewarning-if-scheduled 'pre-scheduled)
   (setq org-log-into-drawer t)
   (setq org-columns-default-format
-      "%25ITEM %TODO %3PRIORITY %SCHEDULED %DEADLINE")
+        "%25ITEM %TODO %3PRIORITY %SCHEDULED %DEADLINE")
   ;; (setq org-agenda-window-setup 'only-window)
   :config
   (setq haskell-process-type 'stack-ghci)
   (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((haskell . t)))
+   'org-babel-load-languages
+   '((haskell . t)
+     (ditaa . t)
+     (dot . t)
+     (plantuml . t)))
   (add-to-list 'org-export-backends 'md)
   (require 'ob-js)
   (require 'ob-clojure)
@@ -1147,33 +1103,37 @@
   :disabled t
   :init
   (setq org-super-agenda-groups
-       '(;; Each group has an implicit boolean OR operator between its selectors.
-         (:name "Today"  ; Optionally specify section name
-                :todo "TODAY"
-                :scheduled past
-                :scheduled today
-                :deadline past
-                :deadline today
-                )  ; Items that have this TODO keyword
-         (:name "Scheduled"
-                :scheduled t
-                :deadline t)
-         (:name "Flagged"
-                ;; Single arguments given alone
-                :tag "flag")
-         (:name "Someday"
-                :todo "SOMEDAY")
-       ))
+        '(;; Each group has an implicit boolean OR operator between its selectors.
+          (:name "Today"  ; Optionally specify section name
+                 :todo "TODAY"
+                 :scheduled past
+                 :scheduled today
+                 :deadline past
+                 :deadline today
+                 )  ; Items that have this TODO keyword
+          (:name "Scheduled"
+                 :scheduled t
+                 :deadline t)
+          (:name "Flagged"
+                 ;; Single arguments given alone
+                 :tag "flag")
+          (:name "Someday"
+                 :todo "SOMEDAY")
+          ))
   :config
   (org-super-agenda-mode))
 
 (use-package org-download
   :diminish
+  :hook
+  (dired-mode . org-download-enable)
   :init
   (setq org-download-image-org-width 500)
-  (setq-default org-download-image-dir "note_assets")
+  ;; (setq-default org-download-image-dir "note_assets")
+  (setq org-download-method 'attach)
   (setq-default org-download-heading-lvl nil)
-  (setq org-download-method 'directory))
+  ;; (setq org-download-method 'directory)
+  (setq org-download-screenshot-method "/usr/sbin/screencapture -i %s"))
 
 (use-package md-roam
   :diminish
@@ -1205,9 +1165,9 @@ argument: format, can be png, jpg, gif, pdf, tif, jpeg (string)"
           (concat
            (format-time-string "%Y-%m-%d_%H-%M-%S") "." format))
     (start-process "" nil "pngpaste"
-                  (concat (expand-file-name org-roam-directory)
-                          "/Assets/"
-                          filename))
+                   (concat (expand-file-name org-roam-directory)
+                           "/Assets/"
+                           filename))
     (insert (concat "![](../Assets/" filename ")"))
     (markdown-display-inline-images))
   (defun my-insert-jpg-from-clipboard ()
@@ -1311,8 +1271,8 @@ requires that the original md file has a structure of SlipBox"
   (setq tidal-interpreter "/Users/las/.ghcup/bin/ghci"))
 
 (use-package clojure-mode
-    :diminish
-)
+  :diminish
+  )
 
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -1389,9 +1349,9 @@ requires that the original md file has a structure of SlipBox"
                                              (when all-the-icons-dired-mode
                                                (revert-buffer))))
   (advice-add 'dired-subtree-cycle :after (lambda ()
-                                             (interactive)
-                                             (when all-the-icons-dired-mode
-                                               (revert-buffer))))
+                                            (interactive)
+                                            (when all-the-icons-dired-mode
+                                              (revert-buffer))))
   )
 
 (use-package treemacs
@@ -1424,9 +1384,9 @@ requires that the original md file has a structure of SlipBox"
 
 
 
-  ;; (custom-set-faces cus
-  ;;  '(mode-line ((t (:underline t))))
-  ;;  '(mode-line-inactive ((t (:underline t)))))
+;; (custom-set-faces cus
+;;  '(mode-line ((t (:underline t))))
+;;  '(mode-line-inactive ((t (:underline t)))))
 (use-package simple-modeline
   :diminish
   :disabled t
@@ -1462,33 +1422,34 @@ requires that the original md file has a structure of SlipBox"
 
 (use-package flyspell
   :init
-    (setq ispell-program-name "aspell")
-;; You could add extra option "--camel-case" for since Aspell 0.60.8 
-;; @see https://github.com/redguardtoo/emacs.d/issues/796
+  (setq ispell-program-name "aspell")
+  ;; You could add extra option "--camel-case" for since Aspell 0.60.8 
+  ;; @see https://github.com/redguardtoo/emacs.d/issues/796
   (setq ispell-extra-args '("--sug-mode=ultra" "--lang=en_US" "--run-together" "--run-together-limit=16")))
 
 (use-package wucuo
   :init
   (setq wucuo-spell-check-buffer-predicate
-      (lambda ()
-        (not (memq major-mode
-                   '(dired-mode
-                     log-edit-mode
-                     compilation-mode
-                     help-mode
-                     profiler-report-mode
-                     speedbar-mode
-                     gud-mode
-                     calc-mode
-                     Info-mode)))))
+        (lambda ()
+          (not (memq major-mode
+                     '(dired-mode
+                       log-edit-mode
+                       compilation-mode
+                       help-mode
+                       profiler-report-mode
+                       speedbar-mode
+                       gud-mode
+                       calc-mode
+                       Info-mode)))))
   :hook
   (prog-mode . wucuo-start)
   (text-mode . wucuo-start)
-)
-  
+  )
+
 (use-package org-roam
-  :straight (org-roam :type git :host github :repo "org-roam/org-roam" :branch "v2")
+  ;; :straight (org-roam :type git :host github :repo "org-roam/org-roam" :branch "v2")
   :init
+  (setq org-roam-v2-ack t)
   (defun org-hide-properties ()
     "Hide all org-mode headline property drawers in buffer. Could be slow if it has a lot of overlays."
     (interactive)
@@ -1516,10 +1477,94 @@ requires that the original md file has a structure of SlipBox"
   :custom
   (org-roam-directory "~/Space/Data/Org Roam/")
   :config
-  (org-roam-setup))
+  (org-roam-setup)
+  (require 'org-roam-protocol ))
 
 (use-package progress-bar
   :straight (:repo "BeneathCloud/progress-bar"))
 
 (use-package org-devonthink
   :straight (:repo "BeneathCloud/org-devonthink"))
+
+(use-package org-tree-slide
+  :init
+  (setq org-tree-slide-heading-emphasis t)
+  :bind
+  (:map org-tree-slide-mode-map
+        ("s-<left>" . org-tree-slide-move-previous-tree)
+        ("s-<right>" . org-tree-slide-move-next-tree)
+        ("s-<up>" . org-tree-slide-content))
+  :hook
+  (org-tree-slide-play . (lambda ()
+                           (org-display-inline-images)
+                           (setq text-scale-mode-amount 3)
+                           (text-scale-mode)
+                           (hide-mode-line-mode)))
+  (org-tree-slide-stop . (lambda ()
+                           (text-scale-mode -1)
+                           (hide-mode-line-mode -1)))
+  :config
+  (org-tree-slide-simple-profile))
+
+(use-package company-math
+  :disabled t
+  :after company
+  :hook
+  (org-mode . (lambda ()
+                (setq-local company-backends
+                            '((company-math-symbols-latex company-latex-commands))))))
+
+;; 显示 emoji
+(set-fontset-font t 'symbol 
+                  (font-spec :family "Apple Color Emoji") 
+                  nil 'prepend)
+
+;; (set-face-attribute 'hl-line nil
+;;                         :foreground "alternateSelectedControlTextColor"
+;;                         :background "selectedContentBackgroundColor")
+;; (set-face-attribute 'selectrum-current-candidate nil
+;;                     :background "selectedContentBackgroundColor"
+;;                     :foreground "alternateSelectedControlTextColor")
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(selectrum-current-candidate ((t (:inherit nano-subtle :extend t)))))
+
+(use-package org-link-beautify
+  :disabled t
+  :config
+  (org-link-beautify-mode 1))
+
+(use-package org-mind-map
+  :init
+  (require 'ox-org)
+  :config
+  (setq org-mind-map-engine "dot"))
+
+(use-package graph
+  :straight (graph :host github :repo "storax/graph.el"))
+
+(use-package alda-mode)
+
+(use-package lorem-ipsum)
+
+(defun my/delete-current-file ()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if filename
+        (when (y-or-n-p (concat "delete file " filename "?"))
+            (progn
+              (delete-file filename t)
+              (message "%s deleted" filename)
+              (kill-buffer)
+              (when (> (length (window-list)) 1)
+                (delete-window))))
+      (message "it's not a file"))))
+
+(use-package winner
+  :config
+  (winner-mode +1))
+
+(use-package git-timemachine)

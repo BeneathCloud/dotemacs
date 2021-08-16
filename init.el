@@ -15,32 +15,117 @@
   (unless (file-exists-p bootstrap-file)
     (with-current-buffer
         (url-retrieve-synchronously
-
          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
          'silent 'inhibit-cookies)
       (goto-char (point-max))
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
-
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
-(setq-default with-editor-emacsclient-executable 
-              "/opt/homebrew/Cellar/emacs-mac/emacs-27.2-mac-8.2/bin/emacsclient")
-;; (setq-default with-editor-emacsclient-executable 
-;;               (shell-command-to-string "which emacsclient"))
+;; -----------------------------------------------------
+
+(use-package emacs
+  :demand
+  :config
+
+  ;; required libs
+  (require 'cl)
+  (setq-default with-editor-emacsclient-executable
+                "/opt/homebrew/bin/emacsclient")
+  ;; emacs server
+  (server-start)
+
+  ;; font settings
+  ;; (setq my/default-font "pragmatapro mono liga 1.125-20")
+  (setq my/default-font "pragmatapro mono liga-20")
+  ;; (setq my/default-font "pragmatapro mono liga 1.75-20")
+  ;; (setq my/default-font "Monoid HalfTight Retina-16")
+  ;; (setq-default line-spacing 0.125)
+
+  ;; trash settings
+  (setq delete-by-moving-to-trash t)
+  (setq trash-directory "~/.Trash")
+
+  (setq frame-resize-pixelwise t)
+
+  (global-visual-line-mode)
+
+  (delete-selection-mode nil)
+
+  (setq ring-bell-function 'ignore)
+
+  ;; indent
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+  (setq indent-line-function 'insert-tab)
+
+  ;; mac command key and option key
+  (when (eq system-type 'darwin)
+    (setq mac-option-modifier 'meta
+          mac-command-modifier 'super
+          mac-option-key-is-meta t))
+
+  ;; fullscreen
+  ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+  (when (eq system-type 'darwin)
+    (if (fboundp 'mac-auto-operator-composition-mode)
+        (mac-auto-operator-composition-mode))
+    ;; default Latin font (e.g. Consolas)
+    ;; (set-face-attribute 'default nil :font "sf mono-20")
+    (set-face-attribute 'default nil :font my/default-font)
+    (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
+    ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
+    )
+
+  (setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
+
+  (defun my/put-file-name-on-clipboard ()
+  "Put the current file name on the clipboard"
+  (interactive)
+  (let ((filename (if (equal major-mode 'dired-mode)
+                      default-directory
+                    (buffer-file-name))))
+    (when filename
+      (with-temp-buffer
+        (insert filename)
+        (clipboard-kill-region (point-min) (point-max)))
+      (message filename))))
+
+  (defun My/add-org-task-to-reminder ()
+    (interactive)
+    (when (eq major-mode 'org-mode)
+      (let* ((reminder-list-name "Inbox")
+            (title (org-element-property
+                    :title
+                    (org-element-at-point)))
+            (command (format "/opt/homebrew/bin/reminders add %s \"%s\" -d today" reminder-list-name title)))
+        (shell-command-to-string command))))
+  )
 
 (use-package diminish)
 
 (use-package nano-theme
+  ;; :disabled t
   :straight (nano-theme :type git :host github
                         :repo "rougier/nano-theme")
-  :config
-  (load-theme 'nano t)
+  :init
+  ;; write a function to do the spacing
+  (defun simple-mode-line-render (left right)
+    "Return a string of `window-width' length containing LEFT, and RIGHT
+ aligned respectively."
+    (let* ((available-width (- (window-total-width)
+                               (length left)
+                               2
+                               (/ (window-right-divider-width)
+                                  (window-font-width nil 'default)))))
+      (format (format " %%s %%%ds " available-width) left right)))
+
   (defun setup-mode-line (dol)
     (setq-default mode-line-format
                   '((:eval (simple-mode-line-render
                             ;; left
-                            (format-mode-line "%b %*")
+                            (format-mode-line "%b %* ")
                             ;; (format-mode-line "%b %m %*")
                             ;; right  
                             (format-mode-line "%l:%c ")))))

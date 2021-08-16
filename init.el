@@ -1,11 +1,5 @@
 ;;-*- lexical-binding: t -*-
-;; TODO
-;; 2. remove system tool dependencies like Rust, ripgrep
-;;    - add a new backend for Snails.el using selectrum for fuzzing search
-;; 3. make edwina work with treemacs
-;; 4. add textbunlde support
-
-(require 'cl)
+;; -----------------------------------------------------
 ;; straght.el
 (defvar bootstrap-version)
 (setq straight-disable-native-compile t)
@@ -145,18 +139,19 @@
                         :underline nil))
   (defun polish@nano-light (old-fn &rest args)
     (apply old-fn args)
+    (set-face-attribute 'default nil :font my/default-font)
     (setup-mode-line "light")
-    (set-face-attribute 'default nil :font "pragmatapro mono liga-20"))
+    )
   (defun polish@nano-dark (old-fn &rest args)
     (apply old-fn args)
+    (set-face-attribute 'default nil :font my/default-font)
     (setup-mode-line "dark")
-    (set-face-attribute 'default nil :font "pragmatapro mono liga-20"))
+    )
+  :config
   (advice-add 'nano-light :around 'polish@nano-light)
   (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
-  ;; (nano-dark)
   (nano-setup)
-  (tool-bar-mode -1)
   )
 
 (use-package nano-modeline
@@ -180,59 +175,6 @@
   (require 'nano-layout)
   (load-theme 'gruvbox t))
 
-(setq delete-by-moving-to-trash t)
-(setq trash-directory "~/.Trash")
-(setq frame-resize-pixelwise t)
-(global-visual-line-mode)
-(blink-cursor-mode -1)
-(delete-selection-mode nil)
-;; (desktop-save-mode nil)
-(setq ring-bell-function 'ignore)
-;; (setq confirm-kill-processes nil)
-;; indent
-(setq-default indent-tabs-mode nil)
-(setq-default tab-width 4)
-(setq indent-line-function 'insert-tab)
-;; (setq mac-option-key-is-meta t
-;;       mac-command-key-is-meta nil
-;;       mac-command-modifier　'super
-;;       ;; mac-command-modifier　'hyper
-;;       mac-option-modifier 'meta
-;;       mac-use-title-bar nil)
-(when (eq system-type 'darwin)
-  (setq mac-option-modifier 'meta
-        mac-command-modifier 'super
-        mac-option-key-is-meta t))
-;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
-(scroll-bar-mode -1)
-;; (add-to-list 'default-frame-alist '(font . "Monaco-18"))
-;; (set-face-attribute 'default nil :font "JetBrains Mono-18")
-;; (set-face-attribute 'default nil :font "Monaco-18") 
-;; (set-face-attribute 'default nil :font "Menlo-16")
-(when (eq system-type 'darwin)
-
-  (if (fboundp 'mac-auto-operator-composition-mode)
-      (mac-auto-operator-composition-mode))
-
-  ;; default Latin font (e.g. Consolas)
-  ;; (set-face-attribute 'default nil :font "sf mono-20")
-  (set-face-attribute 'default nil :font "pragmatapro mono liga-20")
-  ;; default font size (point * 10)
-  ;; 
-  ;; WARNING!  Depending on the default font,
-  ;; if the size is not supported very well, the frame will be clipped
-  ;; so that the beginning of the buffer may not be visible correctly. 
-  ;; (set-face-attribute 'default nil :height 180)
-
-  ;; use specific font for Korean charset.
-  ;; if you want to use different font size for specific charset,
-  ;; add :size POINT-SIZE in the font-spec.
-  (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
-  ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
-  ;; you may want to add different for other charset in this way.
-  )
-                                        ;(define-key minibuffer-local-map (kbd "s-v") 'yank)
-(setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
 
 (use-package general
   :after evil
@@ -286,6 +228,7 @@
    "ng" 'org-roam-graph
    "nc" 'org-roam-capture 
    "nj" 'org-roam-dailies-capture-today
+   "nt" 'org-roam-dailies-goto-today
    ";" 'eval-expression
    "'s" 'consult-register-store
    "'l" 'consult-register-load
@@ -311,7 +254,8 @@
    "pa" 'projectile-add-known-project
    "pf" 'projectile-find-file
    "f" 'find-file
-   "F" (lambda () (interactive) (shell-command (concat "open -R " (buffer-name))))
+   ;; "F" (lambda () (interactive) (shell-command (concat "open -R " (buffer-name))))
+   "F" 'reveal-in-osx-finder
    "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
    "r" 'consult-register-load
@@ -376,7 +320,9 @@
   (evil-global-set-key 'insert (kbd "C-n") 'next-line)
   (evil-global-set-key 'insert (kbd "C-p") 'previous-line)
   (evil-global-set-key 'normal (kbd "C-n") 'evil-next-visual-line)
+  (evil-global-set-key 'normal (kbd "j") 'evil-next-visual-line)
   (evil-global-set-key 'normal (kbd "C-p") 'evil-previous-visual-line)
+  (evil-global-set-key 'normal (kbd "k") 'evil-previous-visual-line)
   (evil-mode))
 
 (use-package evil-collection
@@ -423,12 +369,31 @@
   :config
   (ivy-mode))
 
+(use-package vertico
+  :disabled t
+  :init
+  (vertico-mode))
+
+(use-package orderless
+  :disabled t
+  :init
+  (setq completion-styles '(orderless)
+        completion-category-defaults nil
+        completion-category-overrides '((file (styles partial-completion)))))
+
 (use-package selectrum
+  ;; :disabled t
   :diminish
+  :custom-face
+  (selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
+  ;; (selectrum-current-candidate ((t (:background "red" :extend t))))
+  :init
+  (setq selectrum-extend-current-candidate-highlight t)
   :config
   (selectrum-mode 1))
 
 (use-package selectrum-prescient
+  ;; :disabled t
   :diminish
   :after selectrum
   :config
@@ -510,7 +475,7 @@
 
 (use-package company
   :diminish
-  :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
+  ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
   :bind
   (:map
    company-active-map
@@ -529,7 +494,7 @@
   (company-tooltip-align-annotations t)
   (company-require-match 'never)
   ;; Don't use company in the following modes
-  (company-global-modes '(not shell-mode eaf-mode org-mode))
+  (company-global-modes '(not magit-mode magit-popup-mode shell-mode org-mode dired-mode))
   ;; Trigger completion immediately.
   (company-idle-delay 0.1)
   ;; Number the candidates (use M-1, M-2 etc to select completions).
@@ -749,18 +714,27 @@
 
 (use-package mini-frame
   :diminish
-  :disabled t
+  :hook
+  (after-init . mini-frame-mode)
+  :custom
+  ((mini-frame-show-parameters `((top . 0.2)
+                                 (width . 0.6)
+                                 (left . 0.5)
+                                 ;; (background-color . ,nano-light-subtle)
+                                 ))
+   (mini-frame-color-shift-step 10)
+   (mini-frame-advice-functions '(completing-read))
+   (resize-mini-frame t))
   :config
-  (setq mini-frame-resize t)
-  (mini-frame-mode +1)
+  )
   ;; (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
-  (custom-set-variables
-   `(mini-frame-show-parameters
-     `((top . 0.2)
-       (width . 0.6)
-       (left . 0.5)
-       ;; (background-color . ,nano-color-background)
-       )))
+  ;; (custom-set-variables
+  ;;  `(mini-frame-show-parameters
+  ;;    `((top . 0.2)
+  ;;      (width . 0.6)
+  ;;      (left . 0.5)
+  ;;      ;; (background-color . ,nano-color-background)
+  ;;      )))
   ;; workaround for not showing candidates if no typed characters, should be fixed in Emacs 27.2
   ;; (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
   ;; (cl-letf* ((orig (symbol-function #'window-text-pixel-size))
@@ -775,7 +749,7 @@
   ;;                                      to))
   ;;                              args)))))
   ;; (apply f args)))
-  )
+  
 
 (use-package consult
   :diminish
@@ -793,32 +767,19 @@
       (consult-find dir initial))))
 
 (use-package marginalia
+  ;; :disabled t
   :diminish
-  :bind (:map minibuffer-local-map
-              ("C-M-a" . marginalia-cycle)
-              ;; When using the Embark package, you can bind `marginalia-cycle' as an Embark action!
-              ;;:map embark-general-map
-              ;;     ("A" . marginalia-cycle)
-              )
+  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
+  :bind (("M-A" . marginalia-cycle)
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
 
   ;; The :init configuration is always executed (Not lazy!)
   :init
 
   ;; Must be in the :init section of use-package such that the mode gets
   ;; enabled right away. Note that this forces loading the package.
-  (marginalia-mode)
-
-  ;; When using Selectrum, ensure that Selectrum is refreshed when cycling annotations.
-  (advice-add #'marginalia-cycle :after
-              (lambda () (when (bound-and-true-p selectrum-mode) (selectrum-exhibit))))
-
-  ;; Prefer richer, more heavy, annotations over the lighter default variant.
-  ;; E.g. M-x will show the documentation string additional to the keybinding.
-  ;; By default only the keybinding is shown as annotation.
-  ;; Note that there is the command `marginalia-cycle' to
-  ;; switch between the annotators.
-  ;; (setq marginalia-annotators '(marginalia-annotators-heavy marginalia-annotators-light nil))
-  )
+  (marginalia-mode))
 
 (use-package embark
   :diminish
@@ -895,7 +856,6 @@
 ;;; pdf-tools package and reinstall both as at the start.
 (use-package pdf-tools
   :diminish
-  :disabled t
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
                        :fork (:host github
                                     :repo "flatwhatson/pdf-tools"))
@@ -906,6 +866,8 @@
    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
   (pdf-tools-install))
+
+(use-package org-noter)
 
 (use-package markdown-mode
   :diminish
@@ -971,15 +933,10 @@
   :diminish
   :commands (deft deft-open-file deft-new-file-named)
   :config
-  (setq deft-directory "~/Space/"
+  (setq deft-directory "~/Space/Notes/Org Roam/"
         deft-recursive t
-        deft-extensions '("md" "txt" "org" "tex")
-        deft-use-filter-string-for-filename nil
-        deft-use-filename-as-title t
-        deft-markdown-mode-title-level 1
-        deft-file-naming-rules '((noslash . "-")
-                                 (nospace . "-")
-                                 (case-fn . downcase))))
+        deft-strip-summary-regexp ":PROPERTIES:\n\\(.+\n\\)+:END:"
+        deft-use-filename-as-title t))
 
 (use-package eshell
   :diminish
@@ -1029,6 +986,8 @@
   :init
   (setq org-plantuml-jar-path "/opt/homebrew/Cellar/plantuml/1.2021.8/libexec/plantuml.jar")
   (setq org-plantuml-default-exec-mode 'jar)
+  (setq plantuml-jar-path "/opt/homebrew/Cellar/plantuml/1.2021.8/libexec/plantuml.jar")
+  (setq plantuml-default-exec-mode 'jar)
   (add-to-list
   'org-src-lang-modes '("plantuml" . plantuml)))
 
@@ -1036,8 +995,44 @@
   :diminish
   ;; :hook
   ;; (org-mode . org-num-mode)
+  :hook
+  (org-mode . org-indent-mode)
+  :bind
+  (:map org-mode-map
+        ("C-c C-c" . (lambda ()
+                     (interactive)
+                     (org-ctrl-c-ctrl-c)
+                     (org-display-inline-images))))
   :init
-  (setq org-latex-compiler "lualatex")
+  (setq org-bookmark-names-plist nil) ; don't add bookmark when capture, refile... the highlight is annoying 
+  (setq org-agenda-window-setup 'current-window)
+  (setq org-attach-use-inheritance t)
+  (setq org-tags-column -80)
+  (setq org-cycle-open-archived-trees nil)
+  (setq org-startup-folded 'show2levels)
+  (setq org-default-notes-file "~/Space/Notes/Org Roam/para.org")
+  (setq org-export-with-tags nil)
+  (setq org-latex-toc-command "\\tableofcontents \\clearpage") ; force new page after toc
+  (defun my/list-attachments ()
+    (interactive)
+    (require 'org-attach)
+    (insert (mapconcat (lambda (name)
+                      (concat "+ [[attachment:"
+                              name
+                              "]]"))
+                       (org-attach-file-list (org-attach-dir))
+                       "\n")))
+  (defun my/buffer-local-face (font)
+   "Sets a fixed width (monospace) font in current buffer"
+   (interactive "sFont: ")
+   (setq buffer-face-mode-face `(:family ,font))
+   (buffer-face-mode))
+  ;; :hook
+  ;; (org-mode . (lambda ()
+  ;;               (my/buffer-local-face "pragmatapro mono liga 1.75")
+  ;;               (setq line-spacing 0)))
+  :init
+  ;; (setq org-latex-compiler "lualatex")
   (setq org-export-preserve-breaks t)
   (setq org-ditaa-jar-path "/opt/homebrew/Cellar/ditaa/0.11.0_1/libexec/ditaa-0.11.0-standalone.jar")
   (setq org-latex-inputenc-alist '(("utf8" . "utf8x")))
@@ -1107,13 +1102,18 @@
             (directory-files base)))))
       bases)))
   (require 'org-tempo)
+  (setq org-ellipsis " ⭭ ")
+  (setq org-agenda-hide-tags-regexp "ARCHIVE\\|para\\|ATTACH")
+  (setq org-special-ctrl-a/e nil) ; C-e moves to before the ellipses, not after.
+  (setq org-cycle-separator-lines 0)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
   (setq org-todo-keywords
-        '((sequence "TODO(t)" "|" "DONE(d)" "DELEGATED(D)")))
+        '((sequence "TODO(t!)" "NEXT(n!)" "|" "DONE(d!)" "HOLD(h!)" "DISCARDED(D!)")))
   (setq org-tag-alist '(("flag" . ?f)))
   (setq org-log-done 'time)
+  (setq org-agenda-files '("~/Space/Notes/Org Roam/para.org"))
   ;; (setq org-agenda-files
   ;; (my/get-one-layer-subdirs org-roam-para-dirs))
   ;; don't show deadline befeore scheduled day
@@ -1122,15 +1122,73 @@
   (setq org-columns-default-format
         "%25ITEM %TODO %3PRIORITY %SCHEDULED %DEADLINE")
   ;; (setq org-agenda-window-setup 'only-window)
+  (setq org-clock-persist 'history)
+  (org-clock-persistence-insinuate)
+  (setq org-capture-templates '(("i" "Inbox"
+                                 entry (file+headline "~/Space/Notes/Org Roam/para.org" "Inbox")
+                                 "\n* %?\n\n"
+                                 :prepend t
+                                 :empty-lines 1)))
+  (setq org-capture-bookmark nil)
   :config
+  (setq org-latex-listings 'minted
+      org-latex-packages-alist '(("" "minted"))
+      org-latex-pdf-process
+      '("pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"
+        "pdflatex -shell-escape -interaction nonstopmode -output-directory %o %f"))
+    (setq org-format-latex-header
+        "\\documentclass{article}
+\\usepackage[usenames]{color}
+[PACKAGES]
+[DEFAULT-PACKAGES]
+\\pagestyle{empty}             % do not remove
+% The settings below are copied from fullpage.sty
+\\setlength{\\textwidth}{\\paperwidth}
+\\addtolength{\\textwidth}{-3cm}
+\\setlength{\\oddsidemargin}{1.5cm}
+\\addtolength{\\oddsidemargin}{-2.54cm}
+\\setlength{\\evensidemargin}{\\oddsidemargin}
+\\setlength{\\textheight}{\\paperheight}
+\\addtolength{\\textheight}{-\\headheight}
+\\addtolength{\\textheight}{-\\headsep}
+\\addtolength{\\textheight}{-\\footskip}
+\\addtolength{\\textheight}{-3cm}
+\\setlength{\\topmargin}{1.5cm}
+\\setlength\parindent{0pt}
+\\addtolength{\\topmargin}{-2.54cm}"
+)
+
+  (defface org-checkbox-done-text
+    '((t (:inherit 'org-headline-done)))
+    "Face for the text part of a checked org-mode checkbox.")
+
+  (font-lock-add-keywords
+   'org-mod
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+      1 'org-checkbox-done-text prepend))
+   'append)
   (setq haskell-process-type 'stack-ghci)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((haskell . t)
      (ditaa . t)
      (dot . t)
+     (latex . t)
      (plantuml . t)))
   (add-to-list 'org-export-backends 'md)
+  ;; agenda view custom
+  (require 'org-agenda)
+  (setq org-agenda-prefix-format '(
+                                   (agenda  . "  • %i %?-12t% s")
+                                   ;; (agenda  . " %i %-12:c%?-12t% s") file name + org-agenda-entry-type
+                                   (timeline  . "  % s")
+                                   (todo  . " %i")
+                                   ;; (todo  . " %i %-12:c")
+                                   (tags  . " %i %-12:c")
+                                   (search . " %i %-12:c")))
+
+  (require 'org-attach)
   (require 'ob-js)
   (require 'ob-clojure)
   (setq org-babel-clojure-backend 'cider)
@@ -1189,9 +1247,10 @@
   :init
   (setq org-super-agenda-groups
         '(;; Each group has an implicit boolean OR operator between its selectors.
-          (:name "Today"  ; Optionally specify section name
-                 :todo "TODAY"
-                 :scheduled past
+          (
+           :name ""  ; Optionally specify section name
+                 :todo "NEXT"
+                 ;; :scheduled past
                  :scheduled today
                  :deadline past
                  :deadline today
@@ -1202,14 +1261,15 @@
           (:name "Flagged"
                  ;; Single arguments given alone
                  :tag "flag")
-          (:name "Someday"
-                 :todo "SOMEDAY")
+          ;; (:name "Someday"
+          ;;        :todo "SOMEDAY")
           ))
   :config
   (org-super-agenda-mode))
 
 (use-package org-download
   :diminish
+  :after org
   :hook
   (dired-mode . org-download-enable)
   :init
@@ -1395,12 +1455,19 @@ requires that the original md file has a structure of SlipBox"
  '(blink-cursor-mode nil)
  '(company-auto-commit t nil nil "Customized with use-package company")
  '(custom-safe-themes
-   '("a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+   '("03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
  '(frame-background-mode 'light)
  '(menu-bar-mode nil)
+ '(pdf-tools-handle-upgrades nil)
+ '(safe-local-variable-values
+   '((org-roam-db-location . "~/Space/Notes/PARA/org-roam.db")
+     (org-roam-directory . "~/Space/Notes/PARA/")
+     (org-roam-db-location expand-file-name "./org-roam.db")
+     (org-roam-directory expand-file-name ".")))
  '(show-paren-mode t)
  '(tool-bar-mode nil)
- '(tooltip-mode nil))
+ '(tooltip-mode nil)
+ '(warning-suppress-types '((use-package) (use-package))))
 
 (use-package dired
   :diminish
@@ -1426,9 +1493,13 @@ requires that the original md file has a structure of SlipBox"
   :diminish
   :init
   (setq dired-subtree-use-backgrounds nil)
+  :bind
+  (:map dired-mode-map
+        ("<tab>" . dired-subtree-toggle)
+        ("<backtab>" . dired-subtree-cycle))
   :config
-  (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
-  (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map)
+  ;; (bind-key "<tab>" #'dired-subtree-toggle dired-mode-map)
+  ;; (bind-key "<backtab>" #'dired-subtree-cycle dired-mode-map)
   (advice-add 'dired-subtree-toggle :after (lambda ()
                                              (interactive)
                                              (when all-the-icons-dired-mode
@@ -1480,16 +1551,6 @@ requires that the original md file has a structure of SlipBox"
 (diminish 'auto-revert-mode)
 (diminish 'eldoc-mode)
 (diminish 'visual-line-mode)
-
-;; write a function to do the spacing
-(defun simple-mode-line-render (left right)
-  "Return a string of `window-width' length containing LEFT, and RIGHT
- aligned respectively."
-  (let* ((available-width (- (window-width) (length left) 2)))
-    (format (format " %%s %%%ds " available-width) left right)))
-
-
-
 
 (use-package shell-pop
   :custom
@@ -1560,8 +1621,8 @@ requires that the original md file has a structure of SlipBox"
         (org-show-properties)
       (org-hide-properties)))
   :custom
-  (org-roam-directory "~/Space/Data/Org Roam/")
-  :config
+  (org-roam-directory "~/Space/Notes/Org Roam/")
+  
   (org-roam-setup)
   (require 'org-roam-protocol ))
 
@@ -1581,11 +1642,16 @@ requires that the original md file has a structure of SlipBox"
         ("s-<up>" . org-tree-slide-content))
   :hook
   (org-tree-slide-play . (lambda ()
+                           (make-local-variable 'previous-line-spacing)
+                           (setq previous-line-spacing line-spacing)
+                           (setq line-spacing 1.0)
+                           ;; (setq line-spacing 0)
                            (org-display-inline-images)
                            (setq text-scale-mode-amount 3)
                            (text-scale-mode)
                            (hide-mode-line-mode)))
   (org-tree-slide-stop . (lambda ()
+                           (setq line-spacing previous-line-spacing)
                            (text-scale-mode -1)
                            (hide-mode-line-mode -1)))
   :config
@@ -1615,7 +1681,9 @@ requires that the original md file has a structure of SlipBox"
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(selectrum-current-candidate ((t (:inherit nano-subtle :extend t)))))
+ '(iedit-occurrence ((t (:inherit nano-subtle))))
+ ;; '(selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
+ )
 
 (use-package org-link-beautify
   :disabled t
@@ -1639,17 +1707,229 @@ requires that the original md file has a structure of SlipBox"
   (interactive)
   (let ((filename (buffer-file-name)))
     (if filename
-        (when (y-or-n-p (concat "delete file " filename "?"))
+        (when (y-or-n-p (concat "Delete file " filename "?"))
             (progn
               (delete-file filename t)
               (message "%s deleted" filename)
               (kill-buffer)
               (when (> (length (window-list)) 1)
                 (delete-window))))
-      (message "it's not a file"))))
+      (message "It's not a file."))))
 
+(defun my/rename-current-file ()
+  (interactive)
+  (let ((name (buffer-name))
+        (file-name (buffer-file-name)))
+    (if file-name
+        (let ((new-name (read-from-minibuffer
+                         (concat "New name for: ")
+                         file-name)))
+          (if (get-buffer new-name)
+              (message "A buffer named %s already exists." new-name)
+            (progn
+              (rename-file file-name new-name)
+              (set-visited-file-name new-name)
+              (set-buffer-modified-p nil))))
+      (message "This buffer is not visiting a file."))))
+      
+      
 (use-package winner
   :config
   (winner-mode +1))
 
 (use-package git-timemachine)
+
+(use-package ts)
+
+(use-package lua-mode)
+
+(defun my/hs-reload ()
+  "Reload hammerspoon config"
+  (interactive)
+  (if (executable-find "hs")
+      (shell-command "hs -c \"hs.timer.doAfter(1, hs.reload)\"")
+    (message "Hammerspoon command line binary not installed.")))
+
+(global-unset-key (kbd "M-c")) ;; for hammerspoon console
+(global-unset-key (kbd "M-j")) ;; for hammerspoon console
+(global-unset-key (kbd "M-k")) ;; for hammerspoon console
+(global-unset-key (kbd "M-h")) ;; for hammerspoon console
+(global-unset-key (kbd "M-l")) ;; for hammerspoon console
+
+(use-package svg-tag-mode
+  ;; :disabled t
+  :straight (:repo "rougier/svg-tag-mode")
+  :after org
+  :hook
+  (org-mode . (lambda () (svg-tag-mode)))
+  :init
+  (defface svg-tag-default-face
+    `((t :foreground "black" :background "white" :box "black"
+         :family "menlo" :weight light :height 160))
+    "Default face" :group nil)
+  (defface svg-tag-todo-face
+    `((t :foreground "#ffffff" :background "#FFAB91" :box (:line-width 1 :color "#FFAB91" :style nil)
+         :family "menlo" :weight light :height 160))
+    "TODO face" :group nil)
+  (defface svg-tag-next-face
+    `((t :foreground "white" :background "#673AB7" :box (:line-width 1 :color "#673AB7" :style nil)
+         :family "menlo" :weight light :height 160))
+    "TODO face" :group nil)
+  (defface svg-tag-date-active-face
+    '((t :foreground "white" :background "#673AB7"
+         :box (:line-width 1 :color "#673AB7" :style nil)
+         :family "menlo" :weight regular :height 160))
+    "Face for active date svg tag" :group nil)
+
+  (defface svg-tag-time-active-face
+    '((t :foreground "#673AB7" :background "#ffffff"
+         :box (:line-width 1 :color "#673AB7" :style nil)
+         :family "menlo" :weight light :height 160))
+    "Face for active time svg tag" :group nil)
+
+  (defface svg-tag-date-inactive-face
+    '((t :foreground "#ffffff" :background "#B0BEC5"
+         :box (:line-width 1 :color "#B0BEC5" :style nil)
+         :family "menlo" :weight regular :height 160))
+    "Face for inactive date svg tag" :group nil)
+
+  (defface svg-tag-time-inactive-face
+    '((t :foreground "#B0BEC5" :background "#ffffff"
+         :box (:line-width 2 :color "#B0BEC5" :style nil)
+         :family "menlo" :weight light :height 160))
+    "Face for inactive time svg tag" :group nil)
+  :config
+  (defun svg-tag-default (text)
+    (svg-tag-make (substring text 1 -1) 'svg-tag-default-face 1 1 2))
+  (defun svg-tag-priority (text)
+    (svg-tag-make (substring text 2 -1) 'svg-tag-default-face 1 0 2))
+  (setq svg-tag-todo
+        (svg-tag-make "TODO" 'svg-tag-todo-face 1 1 2))
+  (setq svg-tag-next
+        (svg-tag-make "NEXT" 'svg-tag-next-face 1 1 2))
+
+  (defun svg-tag-make-org-date-active (text)
+  (svg-tag-make (substring text 1 -1) 'svg-tag-date-active-face 1 0 0))
+  (defun svg-tag-make-org-time-active (text)
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 1 0 0))
+  (defun svg-tag-make-org-range-active (text)
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 1 0 0))
+
+  (defun svg-tag-make-org-date-inactive (text)
+    (svg-tag-make (substring text 1 -1) 'svg-tag-date-inactive-face 1 0 0))
+  (defun svg-tag-make-org-time-inactive (text)
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 1 0 0))
+  (defun svg-tag-make-org-range-inactive (text)
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 1 0 0))
+
+  (defconst date-re "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
+  (defconst time-re "[0-9]\\{2\\}:[0-9]\\{2\\}")
+  (defconst day-re "[A-Za-z]\\{3\\}")
+
+  (setq svg-tag-tags
+         `((" TODO " . svg-tag-todo)
+          (" NEXT " . svg-tag-next)
+          (" DONE " . svg-tag-default)
+          (" DISCARDED " . svg-tag-default)
+          (" HOLD " . svg-tag-default)
+
+          (":ARCHIVE:" . svg-tag-default)
+          (":ATTACH:" . svg-tag-default)
+
+          ("\\[#[ABC]\\]" . svg-tag-priority)
+
+          (,(concat "<" date-re  "[ >]")             . svg-tag-make-org-date-active)    
+          (,(concat "<" date-re " " day-re "[ >]")   . svg-tag-make-org-date-active)    
+          (,(concat time-re ">")                     . svg-tag-make-org-time-active)
+          (,(concat time-re "-" time-re ">")         . svg-tag-make-org-range-active)
+
+          (,(concat "\\[" date-re  "[] ]")           . svg-tag-make-org-date-inactive)    
+          (,(concat "\\[" date-re " " day-re "[] ]") . svg-tag-make-org-date-inactive)    
+          (,(concat time-re "\\]")                   . svg-tag-make-org-time-inactive)
+          (,(concat time-re "-" time-re "\\]")       . svg-tag-make-org-range-inactive)
+          ))
+  )
+
+(use-package org-cliplink)
+
+(defun my/finder-path ()
+  "Return path of the frontmost Finder window, or the empty string.
+
+Asks Finder for the path using AppleScript via `osascript', so
+  this can take a second or two to execute."
+  (let ($applescript $result)
+    ;; Script via:  https://brettterpstra.com/2013/02/09/quick-tip-jumping-to-the-finder-location-in-terminal/
+    (setq $applescript "tell application \"Finder\" to if (count of Finder windows) > 0 then get POSIX path of (target of front Finder window as text)")
+    (setq $result (ns-do-applescript $applescript))
+    (if $result
+        (string-trim $result)
+      "")))
+(defun my/mac-finder-in-dired ()
+  (dired (my/finder-path)))
+
+(use-package emacs-everywhere)
+
+(use-package websocket)
+
+(use-package simple-httpd)
+
+(use-package org-roam-ui
+  :straight
+  (:host github :repo "org-roam/org-roam-ui" :branch "main" :files ("*.el" "out"))
+  :after org-roam
+  :hook (org-roam . org-roam-ui-mode))
+
+(use-package twilight-bright-theme
+  :disabled t
+  :config
+  (load-theme 'twilight-bright t))
+
+(use-package todostack
+  :disabled t
+  :straight (:repo "EvansWinner/todostack.el"))
+
+(use-package nodeft
+  :disabled t
+  :straight (notdeft
+             :type git :host github :repo "hasu/notdeft"
+             :files ("*.el" "xapian"))
+  :init
+  (setq notdeft-xapian-program (expand-file-name "~/.config/emacs/straight/repos/notdeft/xapian/notdeft-xapian")
+        notdeft-directories '("~/Space/Notes")
+        notdeft-extension "org"
+        notdeft-allow-org-property-drawers t))
+
+(use-package reveal-in-osx-finder)
+
+(use-package org-superstar
+  :hook
+  (org-mode . (lambda () (org-superstar-mode 1)))
+  :init
+  ;; (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?○))
+  (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?◌))
+  ;; (setq org-superstar-item-bullet-alist '((?* . ?❖) (?+ . ?▣) (?- . ?•)))
+  (setq org-superstar-item-bullet-alist '((?* . ?❖) (?+ . ?▢) (?- . ?•)))
+  ;; This is usually the default, but keep in mind it must be nil
+  (setq org-hide-leading-stars nil)
+  ;; This line is necessary.
+  (setq org-superstar-leading-bullet ?\s)
+  ;; If you use Org Indent you also need to add this, otherwise the
+  ;; above has no effect while Indent is enabled.
+  (setq org-indent-mode-turns-on-hiding-stars nil)
+  )
+
+(use-package nov
+  :straight (:type git :host nil :url "https://depp.brause.cc/nov.el/")
+  :init
+  (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+  :config
+  ;; Fix the Unicode error
+  (with-no-warnings
+    (defun my-nov-content-unique-identifier (content)
+      "Return the unique identifier for CONTENT."
+      (when-let* ((name (nov-content-unique-identifier-name content))
+                  (selector (format "package>metadata>identifier[id='%s']"
+                                    (regexp-quote name)))
+                  (id (car (esxml-node-children (esxml-query selector content)))))
+        (intern id)))
+    (advice-add #'nov-content-unique-identifier :override #'my-nov-content-unique-identifier)))

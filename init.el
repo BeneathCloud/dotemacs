@@ -1,4 +1,4 @@
-;;-*- lexical-binding: t -*-
+;-*- lexical-binding: t -*-
 ;; -----------------------------------------------------
 ;; straght.el
 (defvar bootstrap-version)
@@ -21,7 +21,6 @@
 (use-package emacs
   :demand
   :config
-
   ;; required libs
   (require 'cl)
   (setq-default with-editor-emacsclient-executable
@@ -30,10 +29,26 @@
   (server-start)
 
   ;; font settings
-  ;; (setq my/default-font "pragmatapro mono liga 1.125-20")
-  (setq my/default-font "pragmatapro mono liga-20")
-  ;; (setq my/default-font "pragmatapro mono liga 1.75-20")
-  ;; (setq my/default-font "Monoid HalfTight Retina-16")
+  (setq my/default-fixed-pitch-font "pragmatapro mono liga-20")
+  ;; (setq my/default-variable-pitch-font "Times New Roman")
+  (setq my/default-variable-pitch-font "EtBembo-23")
+  (set-face-font 'default my/default-fixed-pitch-font)
+  (set-face-font 'variable-pitch my/default-variable-pitch-font)
+  (copy-face 'default 'fixed-pitch)
+  (defun fixed-pitch-mode ()
+    (buffer-face-mode -1))
+  (defun variable-pitch-mode ()
+    (buffer-face-mode t))
+  (defun toggle-pitch (&optional arg)
+    "Switch between the `fixed-pitch' face and the `variable-pitch' face"
+    (interactive)
+    (buffer-face-toggle 'variable-pitch))
+  ;; enable buffer-face mode to provide buffer-local fonts
+  ;; (buffer-face-mode)
+  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga 1.125-20")
+  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga-20")
+  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga 1.75-20")
+  ;; (setq my/default-fixed-pitch-font "Monoid HalfTight Retina-16")
   ;; (setq-default line-spacing 0.125)
 
   ;; trash settings
@@ -62,15 +77,15 @@
   ;; fullscreen
   ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
-  (when (eq system-type 'darwin)
-    (if (fboundp 'mac-auto-operator-composition-mode)
-        (mac-auto-operator-composition-mode))
-    ;; default Latin font (e.g. Consolas)
-    ;; (set-face-attribute 'default nil :font "sf mono-20")
-    (set-face-attribute 'default nil :font my/default-font)
-    (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
-    ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
-    )
+  ;; (when (eq system-type 'darwin)
+  ;;   (if (fboundp 'mac-auto-operator-composition-mode)
+  ;;       (mac-auto-operator-composition-mode))
+  ;;   ;; default Latin font (e.g. Consolas)
+  ;;   ;; (set-face-attribute 'default nil :font "sf mono-20")
+  ;;   (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
+  ;;   (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
+  ;;   ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
+  ;;   )
 
   (setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
 
@@ -97,10 +112,7 @@
         (shell-command-to-string command))))
   )
 
-(use-package diminish)
-
 (use-package nano-theme
-  ;; :disabled t
   :straight (nano-theme :type git :host github
                         :repo "rougier/nano-theme")
   :init
@@ -139,42 +151,19 @@
                         :underline nil))
   (defun polish@nano-light (old-fn &rest args)
     (apply old-fn args)
-    (set-face-attribute 'default nil :font my/default-font)
+    (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
     (setup-mode-line "light")
     )
   (defun polish@nano-dark (old-fn &rest args)
     (apply old-fn args)
-    (set-face-attribute 'default nil :font my/default-font)
+    (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
     (setup-mode-line "dark")
     )
   :config
   (advice-add 'nano-light :around 'polish@nano-light)
   (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
-  (nano-setup)
-  )
-
-(use-package nano-modeline
-  :disabled t
-  :straight (nano-modeline :type git :host github
-                           :repo "rougier/nano-modeline")
-  :config
-  (nano-modeline))
-
-(use-package nano-splash
-  :disabled t
-  :straight (nano-splash  :type git :host github
-                          :repo "rougier/nano-splash")
-  :config
-  (nano-splash))
-
-(use-package gruvbox-theme
-  :disabled t
-  :init
-  (add-to-list 'load-path "~/.emacs.d/straight/repos/nano-emacs/")
-  (require 'nano-layout)
-  (load-theme 'gruvbox t))
-
+  (nano-setup))
 
 (use-package general
   :after evil
@@ -187,6 +176,8 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
+   "s-d" 'osx-dictionary-search-word-at-point
+   "s-D" 'osx-dictionary-search-input
    ;; "s-t" 'vterm-other-window
    ;; "s-t" 'eshell-other-window
    "s-u" 'update-progress-bar-at-point
@@ -256,7 +247,7 @@
    "f" 'find-file
    ;; "F" (lambda () (interactive) (shell-command (concat "open -R " (buffer-name))))
    "F" 'reveal-in-osx-finder
-   "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
+   ;; "q" (lambda () (interactive) (let ((default-directory "~/Space/Drafts/")) (call-interactively 'find-file)))
    ;; "s" 'save-buffer
    "r" 'consult-register-load
    "R" 'consult-register-store
@@ -326,64 +317,87 @@
   (evil-mode))
 
 (use-package evil-collection
-  :diminish
-  ;; :disabled t
   :after evil
   :config
   (evil-collection-init))
 
 (use-package evil-commentary
-  :diminish
   :config
   (evil-commentary-mode))
 
 (use-package evil-surround
-  :diminish
   :config
   (global-evil-surround-mode 1))
 
 (use-package avy
-  :diminish
   :after flyspell
   :bind
   ("C-'" . avy-goto-char))
 
-(use-package prescient
-  :config
-  (prescient-persist-mode 1))
-
-(use-package ivy-prescient
-  :disabled t
-  :after ivy
-  :config
-  (ivy-prescient-mode 1))
-
 (use-package company-prescient
+  :disabled t
   :after company
   :config
   (company-prescient-mode 1))
 
-(use-package ivy
-  :disabled t
-  :diminish
-  :config
-  (ivy-mode))
-
-(use-package vertico
-  :disabled t
-  :init
-  (vertico-mode))
-
 (use-package orderless
-  :disabled t
   :init
   (setq completion-styles '(orderless)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
 
+(use-package vertico
+  :init
+  (setq enable-recursive-minibuffers t)
+  (vertico-mode))
+
+(use-package savehist
+  :init
+  (savehist-mode))
+
+;; (use-package prescient
+;;   :config
+;;   (prescient-persist-mode 1))
+
+(use-package corfu
+  :straight (:type git :host github :repo "minad/corfu")
+  :init
+  (setq completion-cycle-threshold 3)
+  (setq tab-always-indent 'complete)
+  ;; Optional customizations
+  :custom
+  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  ;; (corfu-auto t)                 ;; Enable auto completion
+  (corfu-commit-predicate nil)   ;; Do not commit selected candidates on next input
+  ;; (corfu-quit-at-boundary t)     ;; Automatically quit at word boundary
+  ;; (corfu-quit-no-match t)        ;; Automatically quit if there is no match
+  ;; (corfu-echo-documentation nil) ;; Do not show documentation in the echo area
+
+  ;; Optionally use TAB for cycling, default is `corfu-complete'.
+  :bind (:map corfu-map
+         ("TAB" . corfu-next)
+         ([tab] . corfu-next)
+         ("S-TAB" . corfu-previous)
+         ([backtab] . corfu-previous))
+
+  ;; You may want to enable Corfu only for certain modes.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
+
+  ;; Recommended: Enable Corfu globally.
+  ;; This is recommended since dabbrev can be used globally (M-/).
+  :init
+  (corfu-global-mode))
+
+;; Dabbrev works with Corfu
+(use-package dabbrev
+  ;; Swap M-/ and C-M-/
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand)))
+
 (use-package selectrum
-  ;; :disabled t
-  :diminish
+  :disabled t
   :custom-face
   (selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
   ;; (selectrum-current-candidate ((t (:background "red" :extend t))))
@@ -393,21 +407,18 @@
   (selectrum-mode 1))
 
 (use-package selectrum-prescient
-  ;; :disabled t
-  :diminish
+  :disabled t
   :after selectrum
   :config
   (selectrum-prescient-mode 1))
 
 (use-package which-key
-  :diminish
   :config
   (which-key-mode)
   ;; (which-key-setup-minibuffer)
   )
 
 (use-package recentf
-  :diminish
   :init
   (defun recentf-open-files+ ()
     "Use `completing-read' to open a recent file."
@@ -418,12 +429,10 @@
   (recentf-mode t))
 
 (use-package key-chord
-  :diminish
   :config
   (key-chord-mode 1))
 
 (use-package cider
-  :diminish
   :after org
   :bind
   (:map clojure-mode-map
@@ -431,7 +440,6 @@
         ("C-c C-s" . cider-jack-in)))
 
 (use-package exec-path-from-shell
-  :diminish
   :if (memq window-system '(mac ns))
   :config
   ;; (setq exec-path-from-shell-arguments '("-l"))
@@ -446,12 +454,10 @@
   (setq dired-use-ls-dired nil))
 
 (use-package olivetti
-  :diminish
   :init
   (setq olivetti-body-width 80))
 
 (use-package lsp-mode
-  :diminish
   :custom
   (lsp-headerline-breadcrumb-enable nil)
   :hook
@@ -460,7 +466,6 @@
    (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
-  :diminish
   :init
   (setq lsp-ui-doc-enable nil)
   ;; (setq lsp-ui-show-hover t)
@@ -469,13 +474,11 @@
         lsp-ui-sideline-show-code-actions nil)
   )
 
-(use-package lsp-java
-  :diminish
-  )
+(use-package lsp-java)
 
 (use-package company
-  :diminish
-  ;; :hook ((prog-mode LaTeX-mode latex-mode ess-r-mode) . company-mode)
+  :disabled t
+  :hook ((prog-mode) . company-mode)
   :bind
   (:map
    company-active-map
@@ -505,96 +508,33 @@
   ;; (add-to-list 'company-backends 'company-yasnippet)
   )
 
-
-;; (use-package company
-;;   :disabled t
-;;   :hook
-;;   (prog-mode . company-mode)
-;;   ;; :bind
-;;   ;; ;; (:map company-active-map
-;;   ;; ;;       ("<tab>" . company-complete-selection))
-;;   ;; (:map lsp-mode-map
-;;   ;;       ("<tab>" . company-indent-or-complete-common))
-;;   ;; :custom
-;;   ;; (company-minimum-prefix-length 2)
-;;   ;; (company-idle-delay 0.0)
-;;   )
-
 (use-package vterm
-  :diminish
-  ;; :disabled t
   :init
   ;; (evil-define-key 'insert vterm-mode-map "C-u" 'vterm-send-C-u)
   (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
   (setq vterm-kill-buffer-on-exit t))
 
 (use-package paren
-  :diminish
   :config
   (show-paren-mode 1))
 
-(use-package magit
-  :diminish
-  )
+(use-package magit)
 
-(use-package swift-mode
-  :diminish
-  )
+(use-package swift-mode)
 
-(use-package sml-mode
-  :diminish
-  )
+(use-package sml-mode)
 
 (use-package haskell-mode
-  :diminish
   :config
   (electric-pair-local-mode -1))
 
 (use-package lsp-haskell
-  :diminish
-  ;; :disabled t
   :config
   ;; (add-hook 'haskell-mode-hook #'lsp)
   ;; (add-hook 'haskell-literate-mode-hook #'lsp)
   )
 
-;; !need to install ripgrep command line tool in your system
-(use-package snails
-  :diminish
-  :disabled t
-  :straight (snails :type git :host github :repo "manateelazycat/snails" :no-byte-compile t)
-  :config
-  (add-to-list 'evil-emacs-state-modes 'snails-mode)
-  (setq snails-prefix-backends
-        '((">"
-           '(snails-backend-command))
-          ("@"
-           '(snails-backend-imenu))
-          ("#"
-           '(snails-backend-current-buffer))
-          ("!"
-           '(snails-backend-rg))
-          ("^"
-           '(snails-backend-mdfind))
-          ("?"
-           '(snails-backend-mdfind snails-backend-projectile snails-backend-fd snails-backend-everything))))
-  (setq snails-default-backends
-        '(snails-backend-buffer
-          snails-backend-recentf
-          snails-backend-projectile)))
-;; fuzzy search dependency for Snails
-;; !needs to install Rust on your system
-(use-package fuz
-  :diminish
-  :disabled t
-  :straight (fuz :type git :host github :repo "rustify-emacs/fuz.el")
-  :config
-  (unless (require 'fuz-core nil t)
-    (fuz-build-and-load-dymod)))
-
 (use-package edwina
-  ;; :disabled t
-  :diminish
   :custom
   (edwina-mfact 0.55)
   (edwina-narrow-threshold 115)
@@ -604,8 +544,6 @@
   (edwina-mode 1))
 
 (use-package beacon
-  :diminish
-  ;; :disabled t
   :config
   (beacon-mode 1)
   (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
@@ -614,9 +552,7 @@
             (lambda () (bound-and-true-p org-tree-slide-mode))))
 
 (use-package eyebrowse
-  :diminish
   :demand t
-  ;; :disabled t
   :custom
   (eyebrowse-wrap-around t)
   :bind
@@ -640,57 +576,12 @@
     (message (eyebrowse-mode-line-indicator)))
   (eyebrowse-mode))
 
-(use-package dired+
-  :diminish
-  :disabled t)
-
 (use-package yaml-mode
-  :diminish
   :mode ("\\.yaml\\'" "\\.yml\\'"))
 
-(use-package all-the-icons
-  :diminish
-  )
-
-(use-package treemacs-icons-dired
-  :diminish
-  :disabled t
-  :after treemacs dired
-  :config (treemacs-icons-dired-mode))
-
-(use-package perspective
-  :diminish
-  :disabled t
-  :config
-  (persp-mode))
-
-(use-package ranger
-  :diminish
-  :disabled t
-  :init
-  (ranger-override-dired-mode t)
-  (setq ranger-parent-depth 1)
-  (setq ranger-max-parent-width 0.12)
-  (setq ranger-show-hidden t)
-  ;; :hook
-  ;; (
-  ;;  (change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode -1))))
-  ;;  (after-change-major-mode . (lambda () (when (not (and (eq major-mode 'dired-mode)
-  ;;   													 (eq major-mode 'ranger-mode))) (message (symbol-name major-mode)))))
-  ;;  ;(after-change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode))))
-  ;;  ;(after-change-major-mode . (lambda () (when (not (eq major-mode 'ranger-mode)) (edwina-mode nil))))
-  ;; )
-  )
-;; (setq debug-on-error t)
-
-(use-package rainbow-delimiters
-  :diminish
-  :disabled t
-  :hook
-  (prog-mode . rainbow-delimiters-mode))
+(use-package all-the-icons)
 
 (use-package all-the-icons-dired
-  :diminish
   :hook
   ((dired-mode . (lambda ()
                    (interactive)
@@ -699,7 +590,6 @@
    (deer-mode . all-the-icons-dired-mode)))
 
 (use-package projectile
-  :diminish
   :init
   (setq projectile-auto-discover nil)
   (setq projectile-project-root-functions
@@ -713,7 +603,6 @@
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 
 (use-package mini-frame
-  :diminish
   :hook
   (after-init . mini-frame-mode)
   :custom
@@ -724,35 +613,9 @@
                                  ))
    (mini-frame-color-shift-step 10)
    (mini-frame-advice-functions '(completing-read))
-   (resize-mini-frame t))
-  :config
-  )
-  ;; (custom-set-variables `(mini-frame-internal-border-color ,nano-color-subtle))
-  ;; (custom-set-variables
-  ;;  `(mini-frame-show-parameters
-  ;;    `((top . 0.2)
-  ;;      (width . 0.6)
-  ;;      (left . 0.5)
-  ;;      ;; (background-color . ,nano-color-background)
-  ;;      )))
-  ;; workaround for not showing candidates if no typed characters, should be fixed in Emacs 27.2
-  ;; (define-advice fit-frame-to-buffer (:around (f &rest args) dont-skip-ws-for-mini-frame)
-  ;; (cl-letf* ((orig (symbol-function #'window-text-pixel-size))
-  ;;            ((symbol-function #'window-text-pixel-size)
-  ;;             (lambda (win from to &rest args)
-  ;;               (apply orig
-  ;;                      (append (list win from 
-  ;;                                    (if (and (window-minibuffer-p win)
-  ;;                                             (frame-root-window-p win)
-  ;;                                             (eq t to))
-  ;;                                        nil
-  ;;                                      to))
-  ;;                              args)))))
-  ;; (apply f args)))
-  
+   (resize-mini-frame t)))
 
 (use-package consult
-  :diminish
   :init
   (defun consult-focus-lines-quit ()
     (interactive)
@@ -766,86 +629,28 @@
     (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
       (consult-find dir initial))))
 
-(use-package marginalia
-  ;; :disabled t
-  :diminish
-  ;; Either bind `marginalia-cycle` globally or only in the minibuffer
-  :bind (("M-A" . marginalia-cycle)
-         :map minibuffer-local-map
-         ("M-A" . marginalia-cycle))
-
-  ;; The :init configuration is always executed (Not lazy!)
-  :init
-
-  ;; Must be in the :init section of use-package such that the mode gets
-  ;; enabled right away. Note that this forces loading the package.
-  (marginalia-mode))
-
-(use-package embark
-  :diminish
-  :disabled t
-  :ensure t
-  :bind
-  ("C-S-a" . embark-act))             
-
-;; Consult users will also want the embark-consult package.
-(use-package embark-consult
-  :diminish
-  :disabled t
-  :ensure t
-  :after (embark consult)
-  :demand t ; only necessary if you have the hook below
-  ;; if you want to have consult previews as you move around an
-  ;; auto-updating embark collect buffer
-  :hook
-  (embark-collect-mode . embark-consult-preview-minor-mode))
-
 (use-package expand-region
-  :diminish
   :bind
   (("C-=" . er/expand-region)
    ("C--" . er/contract-region)))
 
-(use-package iedit
-  :diminish
-  )
+(use-package iedit)
 
 (use-package flycheck
-  :diminish
   :hook
   ((prog-mode . flycheck-mode)
    (emacs-lisp-mode . (lambda () (flycheck-mode -1)))))
 
 (use-package consult-flycheck
-  :diminish
   :bind (:map flycheck-command-map
               ("!" . consult-flycheck)))
 
-(use-package flycheck-pos-tip
-  :diminish
-  :disabled t
-  :after
-  flycheck)
-
-(use-package flycheck-inline
-  :diminish
-  :disabled t
-  :after
-  flycheck)
-
-(use-package undo-fu
-  :diminish
-  )
+(use-package undo-fu)
 
 (use-package tao-theme
-  :diminish
   ;; :config
   ;; (set-face-attribute 'default nil :height 180)
   ;; (load-theme 'tao-yang t)
-  )
-
-(use-package minimal-theme
-  :diminish
   )
 
 ;;; Install epdfinfo via 'brew install pdf-tools --HEAD' and then install the
@@ -855,7 +660,6 @@
 ;;; up, just do 'brew uninstall pdf-tools', wipe out the elpa
 ;;; pdf-tools package and reinstall both as at the start.
 (use-package pdf-tools
-  :diminish
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
                        :fork (:host github
                                     :repo "flatwhatson/pdf-tools"))
@@ -870,7 +674,6 @@
 (use-package org-noter)
 
 (use-package markdown-mode
-  :diminish
   :mode (("README\\.md\\'" . gfm-mode)
          ("\\.md\\'" . markdown-mode)
          ;; ("\\.md\\'" . gfm-mode)
@@ -914,23 +717,9 @@
         ("C-<up>" . markdown-move-up)
         ("C-<down>" . markdown-move-down)))
 
-(use-package edit-indirect
-  :diminish
-  )
-
-(use-package iscroll
-  :diminish
-  :disabled t
-  :straight (iscroll :type git :host: github :repo "casouri/iscroll")
-  :bind
-  (:map evil-normal-state-map
-        ("j" . iscroll-next-line)
-        ("k" . iscroll-previous-line)
-        ("C-n" . iscroll-next-line)
-        ("C-p" . iscroll-previous-line)))
+(use-package edit-indirect)
 
 (use-package deft
-  :diminish
   :commands (deft deft-open-file deft-new-file-named)
   :config
   (setq deft-directory "~/Space/Notes/Org Roam/"
@@ -939,7 +728,6 @@
         deft-use-filename-as-title t))
 
 (use-package eshell
-  :diminish
   :init
   (defun set-eshell-prompt-path ()
     (interactive)
@@ -973,12 +761,9 @@
                      (kbd "C-n") 'eshell-next-input
                      (kbd "<down>" 'eshell-next-input)))))
 
-(use-package restclient
-  :diminish
-  )
+(use-package restclient)
 
 (use-package ob-restclient
-  :diminish
   :after org)
 
 (use-package plantuml-mode
@@ -992,7 +777,6 @@
   'org-src-lang-modes '("plantuml" . plantuml)))
 
 (use-package org
-  :diminish
   ;; :hook
   ;; (org-mode . org-num-mode)
   :hook
@@ -1101,7 +885,7 @@
                    (not (equal file "."))))
             (directory-files base)))))
       bases)))
-  (require 'org-tempo)
+  (require 'org-tempo) ; enable <s, <e ... abbrev
   (setq org-ellipsis " ⭭ ")
   (setq org-agenda-hide-tags-regexp "ARCHIVE\\|para\\|ATTACH")
   (setq org-special-ctrl-a/e nil) ; C-e moves to before the ellipses, not after.
@@ -1198,7 +982,6 @@
   (require 'ob-ruby))
 
 (use-package evil-org
-  :diminish
   :after org
   :hook (org-mode . (lambda () evil-org-mode))
   :config
@@ -1206,7 +989,6 @@
   (evil-org-agenda-set-keys))
 
 (use-package org-ql
-  :diminish
   :disabled t
   :after org
   :init
@@ -1242,7 +1024,6 @@
             )))))
 
 (use-package org-super-agenda
-  :diminish
   :disabled t
   :init
   (setq org-super-agenda-groups
@@ -1268,7 +1049,6 @@
   (org-super-agenda-mode))
 
 (use-package org-download
-  :diminish
   :after org
   :hook
   (dired-mode . org-download-enable)
@@ -1280,115 +1060,12 @@
   ;; (setq org-download-method 'directory)
   (setq org-download-screenshot-method "/usr/sbin/screencapture -i %s"))
 
-(use-package md-roam
-  :diminish
-  :disabled t
-  :straight (md-roam :type git :host github :repo "nobiot/md-roam")
-  :init
-  (setq md-roam-file-extension-single "md")
-  (setq org-roam-title-sources '((mdtitle title mdheadline headline) (mdalias alias)))
-  (setq org-roam-tag-sources '(md-frontmatter))
-  (setq md-roam-use-org-file-links nil)
-  (defun my-md-insert-file ()
-    "select a file and insert to copy to resources dir and insert md link"
-    (interactive)
-    (let* ((filename (read-file-name "select a file: "))
-           (extension (file-name-extension filename))
-           (new-filename-nondir (concat (format-time-string "%Y-%m-%d_%H-%M-%S") "." extension))
-           (new-filename (concat slipbox-resources-directory new-filename-nondir)))
-      (copy-file filename new-filename)
-      (insert (concat "[](../Assets/" new-filename-nondir ")"))))
-  (defun my-insert-image-from-clipboard (format)
-    "paste image from clipboard to org-roam-directory/resources
-and insert the markdown link to current position.
-require pastepng installed.
-argument: format, can be png, jpg, gif, pdf, tif, jpeg (string)"
-    (interactive)
-    (if (string= "pdf" format)
-        (setq format "png"))
-    (setq filename
-          (concat
-           (format-time-string "%Y-%m-%d_%H-%M-%S") "." format))
-    (start-process "" nil "pngpaste"
-                   (concat (expand-file-name org-roam-directory)
-                           "/Assets/"
-                           filename))
-    (insert (concat "![](../Assets/" filename ")"))
-    (markdown-display-inline-images))
-  (defun my-insert-jpg-from-clipboard ()
-    (interactive)
-    (my-insert-image-from-clipboard "jpg"))
-  (defun my-insert-gif-from-clipboard ()
-    (interactive)
-    (my-insert-image-from-clipboard "gif"))
-  (defun delete-resource ()
-    "delete resources file from current line's markdown link"
-    (interactive)
-    (let* ((line (buffer-substring-no-properties
-                  (line-beginning-position)
-                  (line-end-position)))
-           (start (+ (string-match "(" line) 1))
-           (end (string-match ")" line)))
-      (delete-file (expand-file-name (substring line start end)))
-      (kill-whole-line)))
-  (defun my/all-occur (regexp string)
-    "Get a list of all regexp matches in a string"
-    (interactive)
-    (save-match-data
-      (let ((pos 0)
-            matches)
-        (while (string-match regexp string pos)
-          (push (match-string 0 string) matches)
-          (setq pos (match-end 0)))
-        matches)))
-  (defun my/file-contents (filename)
-    "Return the contents of FILENAME."
-    (with-temp-buffer
-      (insert-file-contents filename)
-      (buffer-string)))
-  (defun my/all-md-link (filename)
-    (interactive)
-    (my/all-occur "\\[.*\\]\\(.*\\)" (my/file-contents filename)))
-  (defun my/export-md-to-textbundle-structure ()
-    "export a selected md file, copy md file and its assets to Downloads dir,
-and process the md link inside to adapt to textbundle dir strucuture,
-remove the md and assets file to a trash dir
-requires that the original md file has a structure of SlipBox"
-    (interactive)
-    (let* ((filename (read-file-name ""))
-           (default-directory (file-name-directory filename))
-           (filename-nondir (file-name-nondirectory filename))
-           (filename-sans (file-name-sans-extension filename-nondir))
-           (all-md-links (my/all-md-link filename))
-           (output-dir (concat (expand-file-name "~/Downloads/") filename-sans "/"))
-           (assets-dir (concat output-dir "assets/"))
-           (output-md-file-name (concat output-dir filename-nondir))
-           (all-links
-            (mapcar (lambda (link) (expand-file-name (substring (string-trim-right link) 3 -1) ))
-                    all-md-links)))
-      (when (not (file-directory-p output-dir)) (make-directory output-dir))
-      (when (not (file-directory-p assets-dir)) (make-directory assets-dir))
-      (copy-file filename output-md-file-name)
-      (dolist (filename all-links)
-        (copy-file filename (concat assets-dir (file-name-nondirectory filename)))
-        (message (concat "file " filename " copied successfully"))
-        ;; (move-file-to-trash filename)
-        ;; won't delete files, will build a fun to scan whole files and remove useless link,
-        ;; for intentionlly useage, for performance
-        (message (concat "file " filename " deleted successfully")))
-      (start-process "" nil "sed" "-i" "" "s|](\\.\\./|](|" output-md-file-name)
-      ;; (move-file-to-trash filename)
-      (message (concat "file " filename " copied and deleted successfully")))))
-
 (use-package geiser
-  :diminish
   :init
   (setq geiser-active-implementations '(chez Racket MIT/GNU guile))
   (setq geiser-chez-binary "chez"))
 
 (use-package electric
-  :diminish
-  ;; :disabled t
   :config
   (electric-pair-mode)
   :hook
@@ -1401,23 +1078,18 @@ requires that the original md file has a structure of SlipBox"
                         (,electric-pair-inhibit-predicate c)))))))
 
 (use-package org-fragtog
-  :diminish
   :hook
   (org-mode . org-fragtog-mode))
 
 (use-package w3m
-  :diminish
   :init
   (setq w3m-command "/opt/homebrew/bin/w3m"))
 
 (use-package tidal
-  :diminish
   :init
   (setq tidal-interpreter "/Users/las/.ghcup/bin/ghci"))
 
-(use-package clojure-mode
-  :diminish
-  )
+(use-package clojure-mode)
 
 ;; (custom-set-faces
 ;;  ;; custom-set-faces was added by Custom.
@@ -1428,24 +1100,6 @@ requires that the original md file has a structure of SlipBox"
 ;;  '(window-divider ((t (:foreground "#282828"))))
 ;;  '(window-divider-first-pixel ((t (:foreground "gray25"))))
 ;;  '(window-divider-last-pixel ((t (:foreground "gray25")))))
-
-(use-package telephone-line
-  :diminish
-  :disabled t
-  :config
-  (setq telephone-line-primary-left-separator 'telephone-line-flat
-        telephone-line-primary-right-separator telephone-line-primary-left-separator
-        telephone-line-secondary-left-separator 'telephone-line-flat
-        telephone-line-secondary-right-separator telephone-line-secondary-left-separator)
-  (telephone-line-mode 1))
-
-(use-package lispy
-  :disabled t
-  :diminish
-  :hook
-  ((clojure-mode . (lambda () (lispy-mode 1)))
-   (emacs-lisp-mode . (lambda () (lispy-mode 1)))
-   (scheme-mode . (lambda () (lispy-mode)))))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -1470,7 +1124,6 @@ requires that the original md file has a structure of SlipBox"
  '(warning-suppress-types '((use-package) (use-package))))
 
 (use-package dired
-  :diminish
   :straight nil
   :init
   (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'\\|^.DS_STORE$\\|^.projectile$\\|^.git$")
@@ -1481,16 +1134,10 @@ requires that the original md file has a structure of SlipBox"
 (use-package dired-hacks-utils)
 
 (use-package dired-open
-  :diminish
   :init
   (setq dired-open-extensions '(("pdf" . "open"))))
 
-(use-package diredfl
-  :diminish
-  :disabled t)
-
 (use-package dired-subtree
-  :diminish
   :init
   (setq dired-subtree-use-backgrounds nil)
   :bind
@@ -1510,47 +1157,9 @@ requires that the original md file has a structure of SlipBox"
                                               (revert-buffer))))
   )
 
-(use-package treemacs
-  :diminish
-  :disabled t)
-
-(use-package dired-sidebar
-  :diminish
-  :disabled t
-  :commands (dired-sidebar-toggle-sidebar))
-
 (use-package hide-mode-line
-  :diminish
   :hook
   (dired-mode . hide-mode-line-mode))
-
-;; (set-face-attribute 'mode-line nil
-;;                     :background nano-dark-background
-;;                     :foreground "white"
-;;                     ;; :box '(:line-width 8 :color "#353644")
-;;                     ;; :overline nil
-;;                     ;; :underline nil
-;;                     )
-
-;; (set-face-attribute 'mode-line-inactive nil
-;;                     :background "#565063"
-;;                     :foreground "white"
-;;                     ;; :box '(:line-width 8 :color "#565063")
-;;                     :overline nil
-
-
-
-;; (custom-set-faces cus
-;;  '(mode-line ((t (:underline t))))
-;;  '(mode-line-inactive ((t (:underline t)))))
-(use-package simple-modeline
-  :diminish
-  :disabled t
-  :hook (after-init . simple-modeline-mode))
-
-(diminish 'auto-revert-mode)
-(diminish 'eldoc-mode)
-(diminish 'visual-line-mode)
 
 (use-package shell-pop
   :custom
@@ -1560,10 +1169,12 @@ requires that the original md file has a structure of SlipBox"
   (shell-pop-in-after . (lambda () (edwina-arrange))))
 
 (use-package yasnippet
+  :disabled t
   :config
   (yas-global-mode 1))
 
 (use-package yasnippet-snippets
+  :disabled t
   :after yasnippet)
 
 (use-package flyspell
@@ -1657,14 +1268,6 @@ requires that the original md file has a structure of SlipBox"
   :config
   (org-tree-slide-simple-profile))
 
-(use-package company-math
-  :disabled t
-  :after company
-  :hook
-  (org-mode . (lambda ()
-                (setq-local company-backends
-                            '((company-math-symbols-latex company-latex-commands))))))
-
 ;; 显示 emoji
 (set-fontset-font t 'symbol 
                   (font-spec :family "Apple Color Emoji") 
@@ -1684,11 +1287,6 @@ requires that the original md file has a structure of SlipBox"
  '(iedit-occurrence ((t (:inherit nano-subtle))))
  ;; '(selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
  )
-
-(use-package org-link-beautify
-  :disabled t
-  :config
-  (org-link-beautify-mode 1))
 
 (use-package org-mind-map
   :init
@@ -1717,6 +1315,7 @@ requires that the original md file has a structure of SlipBox"
       (message "It's not a file."))))
 
 (defun my/rename-current-file ()
+  "rename current file name"
   (interactive)
   (let ((name (buffer-name))
         (file-name (buffer-file-name)))
@@ -1731,7 +1330,6 @@ requires that the original md file has a structure of SlipBox"
               (set-visited-file-name new-name)
               (set-buffer-modified-p nil))))
       (message "This buffer is not visiting a file."))))
-      
       
 (use-package winner
   :config
@@ -1757,7 +1355,6 @@ requires that the original md file has a structure of SlipBox"
 (global-unset-key (kbd "M-l")) ;; for hammerspoon console
 
 (use-package svg-tag-mode
-  ;; :disabled t
   :straight (:repo "rougier/svg-tag-mode")
   :after org
   :hook
@@ -1879,26 +1476,6 @@ Asks Finder for the path using AppleScript via `osascript', so
   :after org-roam
   :hook (org-roam . org-roam-ui-mode))
 
-(use-package twilight-bright-theme
-  :disabled t
-  :config
-  (load-theme 'twilight-bright t))
-
-(use-package todostack
-  :disabled t
-  :straight (:repo "EvansWinner/todostack.el"))
-
-(use-package nodeft
-  :disabled t
-  :straight (notdeft
-             :type git :host github :repo "hasu/notdeft"
-             :files ("*.el" "xapian"))
-  :init
-  (setq notdeft-xapian-program (expand-file-name "~/.config/emacs/straight/repos/notdeft/xapian/notdeft-xapian")
-        notdeft-directories '("~/Space/Notes")
-        notdeft-extension "org"
-        notdeft-allow-org-property-drawers t))
-
 (use-package reveal-in-osx-finder)
 
 (use-package org-superstar
@@ -1933,3 +1510,5 @@ Asks Finder for the path using AppleScript via `osascript', so
                   (id (car (esxml-node-children (esxml-query selector content)))))
         (intern id)))
     (advice-add #'nov-content-unique-identifier :override #'my-nov-content-unique-identifier)))
+
+(use-package osx-dictionary)

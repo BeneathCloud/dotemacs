@@ -16,102 +16,8 @@
   (load bootstrap-file nil 'nomessage))
 (straight-use-package 'use-package)
 (setq straight-use-package-by-default t)
+
 ;; -----------------------------------------------------
-
-(use-package emacs
-  :demand
-  :config
-  ;; required libs
-  (require 'cl)
-  (setq-default with-editor-emacsclient-executable
-                "/opt/homebrew/bin/emacsclient")
-  ;; emacs server
-  (server-start)
-
-  ;; font settings
-  (setq my/default-fixed-pitch-font "pragmatapro mono liga-20")
-  ;; (setq my/default-variable-pitch-font "Times New Roman")
-  (setq my/default-variable-pitch-font "EtBembo-23")
-  (set-face-font 'default my/default-fixed-pitch-font)
-  (set-face-font 'variable-pitch my/default-variable-pitch-font)
-  (copy-face 'default 'fixed-pitch)
-  (defun fixed-pitch-mode ()
-    (buffer-face-mode -1))
-  (defun variable-pitch-mode ()
-    (buffer-face-mode t))
-  (defun toggle-pitch (&optional arg)
-    "Switch between the `fixed-pitch' face and the `variable-pitch' face"
-    (interactive)
-    (buffer-face-toggle 'variable-pitch))
-  ;; enable buffer-face mode to provide buffer-local fonts
-  ;; (buffer-face-mode)
-  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga 1.125-20")
-  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga-20")
-  ;; (setq my/default-fixed-pitch-font "pragmatapro mono liga 1.75-20")
-  ;; (setq my/default-fixed-pitch-font "Monoid HalfTight Retina-16")
-  ;; (setq-default line-spacing 0.125)
-
-  ;; trash settings
-  (setq delete-by-moving-to-trash t)
-  (setq trash-directory "~/.Trash")
-
-  (setq frame-resize-pixelwise t)
-
-  (global-visual-line-mode)
-
-  (delete-selection-mode nil)
-
-  (setq ring-bell-function 'ignore)
-
-  ;; indent
-  (setq-default indent-tabs-mode nil)
-  (setq-default tab-width 4)
-  (setq indent-line-function 'insert-tab)
-
-  ;; mac command key and option key
-  (when (eq system-type 'darwin)
-    (setq mac-option-modifier 'meta
-          mac-command-modifier 'super
-          mac-option-key-is-meta t))
-
-  ;; fullscreen
-  ;; (add-to-list 'default-frame-alist '(fullscreen . maximized))
-
-  ;; (when (eq system-type 'darwin)
-  ;;   (if (fboundp 'mac-auto-operator-composition-mode)
-  ;;       (mac-auto-operator-composition-mode))
-  ;;   ;; default Latin font (e.g. Consolas)
-  ;;   ;; (set-face-attribute 'default nil :font "sf mono-20")
-  ;;   (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
-  ;;   (set-fontset-font t 'hangul (font-spec :name "NanumGothicCoding"))
-  ;;   ;; (set-face-attribute 'mode-line nil :font "Monaco-14")
-  ;;   )
-
-  (setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
-
-  (defun my/put-file-name-on-clipboard ()
-  "Put the current file name on the clipboard"
-  (interactive)
-  (let ((filename (if (equal major-mode 'dired-mode)
-                      default-directory
-                    (buffer-file-name))))
-    (when filename
-      (with-temp-buffer
-        (insert filename)
-        (clipboard-kill-region (point-min) (point-max)))
-      (message filename))))
-
-  (defun My/add-org-task-to-reminder ()
-    (interactive)
-    (when (eq major-mode 'org-mode)
-      (let* ((reminder-list-name "Inbox")
-            (title (org-element-property
-                    :title
-                    (org-element-at-point)))
-            (command (format "/opt/homebrew/bin/reminders add %s \"%s\" -d today" reminder-list-name title)))
-        (shell-command-to-string command))))
-  )
-
 (use-package nano-theme
   :straight (nano-theme :type git :host github
                         :repo "rougier/nano-theme")
@@ -126,7 +32,6 @@
                                (/ (window-right-divider-width)
                                   (window-font-width nil 'default)))))
       (format (format " %%s %%%ds " available-width) left right)))
-
   (defun setup-mode-line (dol)
     (setq-default mode-line-format
                   '((:eval (simple-mode-line-render
@@ -135,14 +40,12 @@
                             ;; (format-mode-line "%b %m %*")
                             ;; right  
                             (format-mode-line "%l:%c ")))))
-
     (set-face-attribute 'mode-line nil
                         :background (eval (intern (concat "nano-" dol "-subtle")))
                         :foreground (eval (intern (concat "nano-" dol "-foreground")))
                         :box (list :line-width 2 :color (eval (intern (concat "nano-" dol "-faded"))))
                         :overline nil	
                         :underline nil)
-
     (set-face-attribute 'mode-line-inactive nil
                         :background (eval (intern (concat "nano-" dol "-background")))
                         :foreground (eval (intern (concat "nano-" dol "-foreground")))
@@ -152,21 +55,198 @@
   (defun polish@nano-light (old-fn &rest args)
     (apply old-fn args)
     (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
-    (setup-mode-line "light")
+    ;; (setup-mode-line "light")
     )
   (defun polish@nano-dark (old-fn &rest args)
     (apply old-fn args)
     (set-face-attribute 'default nil :font my/default-fixed-pitch-font)
-    (setup-mode-line "dark")
+    ;; (setup-mode-line "dark")
     )
   :config
   (advice-add 'nano-light :around 'polish@nano-light)
   (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
-  (nano-setup))
+  )
+
+(use-package emacs
+  :after nano-theme
+  :custom
+  (face-font-family-alternatives
+   '(("Monospace" "pragmatapro mono liga" "courier" "fixed")
+     ("Consolas" "Monaco" "Roboto Mono" "PT Mono" "Terminus" "Monospace")
+     ("Monospace Serif" "CMU Typewriter Text" "Courier 10 Pitch" "Monospace")
+     ("Serif" "CMU Serif" "Georgia" "Cambria" "Times New Roman" "DejaVu Serif" "serif")
+     ("Variable Serif" "PingFang SC" "Helvetica")))
+  (delete-by-moving-to-trash t)
+  (trash-directory "~/.Trash")
+  (frame-resize-pixelwise t)
+  :custom-face
+  (mode-line ((t (:family "Monospace" :height 150
+                          :inherit nano-subtle
+                          ;; :box (:line-width 3 :inherit nano-subtle-i)))))
+                          :box (:line-width 3 :color ,nano-light-subtle)))))
+  (mode-line-inactive ((t (:family "Monospace" :height 150
+                          ;; :inherit nano-subtle-i
+                           :background ,nano-light-subtle
+                           :foreground ,nano-light-faded
+                          ;; :box (:line-width 3 :color ,nano-light-subtle)))))
+                          :box (:line-width 3 :color ,nano-light-subtle)))))
+  (variable-pitch ((t (:family "Variable Serif" :height 200))))
+  (fixed-pitch ((t (:family "Monospace" :height 200))))
+  (default ((t (:family "Monospace" :height 200))))
+  :init
+  ;; No startup  screen
+  (setq inhibit-startup-screen t)
+  ;; No startup message
+  (setq inhibit-startup-message t)
+  (setq inhibit-startup-echo-area-message t)
+  ;; No message in scratch buffer
+  (setq initial-scratch-message nil)
+  ;; Initial buffer
+  (setq initial-buffer-choice nil)
+  ;; No frame title
+  (setq frame-title-format nil)
+  ;; No file dialog
+  (setq use-file-dialog nil)
+  ;; No dialog box
+  (setq use-dialog-box nil)
+  ;; No popup windows
+  (setq pop-up-windows nil)
+  ;; No empty line indicators
+  (setq indicate-empty-lines nil)
+  ;; No cursor in inactive windows
+  (setq cursor-in-non-selected-windows nil)
+  ;; Text mode is initial mode
+  (setq initial-major-mode 'text-mode)
+  ;; Text mode is default major mode
+  (setq default-major-mode 'text-mode)
+  ;; Moderate font lock
+  (setq font-lock-maximum-decoration nil)
+  ;; No limit on font lock
+  (setq font-lock-maximum-size nil)
+  ;; No line break space points
+  (setq auto-fill-mode nil)
+  ;; Fill column at 80
+  (setq fill-column 80)
+  ;; Bar cursor
+  (setq-default cursor-type '(hbar .  2))
+  (setq-default cursor-in-non-selected-windows nil)
+  (setq blink-cursor-mode nil)
+  ;; No scroll bars
+  (if (fboundp 'scroll-bar-mode)
+      (scroll-bar-mode -1))
+  ;; No toolbar
+  (if (fboundp 'tool-bar-mode)
+      (tool-bar-mode nil))
+  ;; Default frame settings
+  (setq default-frame-alist
+        (append (list
+	             '(min-height . 1)  '(height . 45)
+	             '(min-width  . 1)  '(width  . 81)
+                 '(vertical-scroll-bars . nil)
+                 '(internal-border-width . 24)
+                 '(left-fringe . 0)
+                 '(right-fringe . 0)
+                 '(tool-bar-lines . 0)
+                 '(menu-bar-lines . 0))))
+  ;; Line spacing (in pixels)
+  (setq line-spacing 0)
+  ;; Vertical window divider
+  (setq window-divider-default-right-width 24)
+  (setq window-divider-default-places 'right-only)
+  (window-divider-mode 1)
+  ;; Nicer glyphs for continuation and wrap 
+  (set-display-table-slot standard-display-table
+			              'truncation (make-glyph-code ?… 'nano-faded))
+  (set-display-table-slot standard-display-table
+			              'wrap (make-glyph-code ?… 'nano-faded))
+
+  :config
+  (require 'cl)
+  ;; emacs server
+  (server-start)
+  (global-visual-line-mode)
+  (delete-selection-mode nil)
+  (setq ring-bell-function 'ignore)
+  ;; indent
+  (setq-default indent-tabs-mode nil)
+  (setq-default tab-width 4)
+  (setq indent-line-function 'insert-tab)
+  ;; mac command key and option key
+  (when (eq system-type 'darwin)
+    (setq mac-option-modifier 'meta
+          mac-command-modifier 'super
+          mac-option-key-is-meta t))
+  (setq ps-print-header nil) ; 去除 wysiwyg print 的 header （C-u M-x ps-print-buffer-with-faces 打印成ps文件， M-x 直接发送到打印机）
+  (defun my/put-file-name-on-clipboard ()
+    "Put the current file name on the clipboard"
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (with-temp-buffer
+          (insert filename)
+          (clipboard-kill-region (point-min) (point-max)))
+        (message filename))))
+
+  (defun My/add-org-task-to-reminder ()
+    (interactive)
+    (when (eq major-mode 'org-mode)
+      (let* ((reminder-list-name "Inbox")
+             (title (org-element-property
+                     :title
+                     (org-element-at-point)))
+             (command (format "/opt/homebrew/bin/reminders add %s \"%s\" -d today" reminder-list-name title)))
+        (shell-command-to-string command))))
+  )
+
+(use-package el-patch
+  :init
+  (setq el-patch-enable-use-package-integration t))
+
+(use-package key-chord
+  :config
+  (key-chord-mode 1))
+
+(use-package evil
+  ;;:disabled
+  :init
+  (setq evil-undo-system 'undo-fu)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  :config
+  (evil-global-set-key 'insert (kbd "C-n") 'next-line)
+  (evil-global-set-key 'insert (kbd "C-p") 'previous-line)
+  (evil-global-set-key 'normal (kbd "C-n") 'evil-next-visual-line)
+  (evil-global-set-key 'normal (kbd "j") 'evil-next-visual-line)
+  (evil-global-set-key 'normal (kbd "C-p") 'evil-previous-visual-line)
+  (evil-global-set-key 'normal (kbd "k") 'evil-previous-visual-line)
+  (evil-mode))
+
+(use-package evil-collection
+  ;;:disabled
+  :after evil
+  :config
+  (evil-collection-init))
+
+(use-package evil-commentary
+  ;;:disabled
+  :config
+  (evil-commentary-mode))
+
+(use-package evil-surround
+  ;;:disabled
+  :config
+  (global-evil-surround-mode 1))
+
+(use-package avy
+  :after flyspell
+  :bind
+  ("C-'" . avy-goto-char))
 
 (use-package general
-  :after evil
+  ;; :after evil
   :config
   ;; for leader
   (general-define-key
@@ -213,6 +293,7 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
+   "m" 'mu4e
    "nb" 'org-roam-buffer-toggle
    "nn" 'org-roam-node-find
    "ni" 'org-roam-node-insert
@@ -224,12 +305,13 @@
    "'s" 'consult-register-store
    "'l" 'consult-register-load
    "''" 'consult-register
-   "e" 'consult-flycheck
+   ;; "e" 'consult-flycheck
+   "e" 'elfeed
    "E" 'flycheck-list-errors
    "k" 'consult-focus-lines
    "K" 'consult-focus-lines-quit
-   "a" 'iedit-mode
-   "A" 'org-agenda
+   "A" 'iedit-mode
+   "a" 'org-agenda
    "s" 'consult-isearch
    "L" 'consult-ripgrep
    "l" 'consult-line
@@ -240,10 +322,10 @@
    ;; "SPC" 'projectile-find-file
    "x" 'execute-extended-command
    "g" 'magit
-   "pp" 'projectile-switch-project
-   "pd" 'projectile-remove-known-project
-   "pa" 'projectile-add-known-project
-   "pf" 'projectile-find-file
+   ;; "pp" 'projectile-switch-project
+   ;; "pd" 'projectile-remove-known-project
+   ;; "pa" 'projectile-add-known-project
+   ;; "pf" 'projectile-find-file
    "f" 'find-file
    ;; "F" (lambda () (interactive) (shell-command (concat "open -R " (buffer-name))))
    "F" 'reveal-in-osx-finder
@@ -254,7 +336,8 @@
    "d" 'dired
    "D" (lambda () (interactive) (shell-command "open ."))
    ;; "D" 'ranger
-   "b" 'switch-to-buffer
+   ;; "b" 'switch-to-buffer
+   "b" 'consult-bookmark
    "S" 'im/search-rg+
    "O" 'olivetti-mode
    "`" (lambda () (interactive) (switch-to-buffer (other-buffer (current-buffer) 1))))
@@ -271,7 +354,9 @@
   (general-define-key
    :states '(insert normal emacs visual)
    :keymaps '(lispy-mode-map emacs-lisp-mode-map)
-   "M-<return>" 'eval-last-sexp)
+   "M-<return>" 'eval-last-sexp
+   "M-S-<return>" 'eval-defun
+   )
 
   (general-define-key
    :states '(insert emacs)
@@ -302,75 +387,38 @@
    "M-SPC" 'consult-buffer)
   )
 
-(use-package evil
-  :init
-  (setq evil-undo-system 'undo-fu)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-u-scroll t)
-  :config
-  (evil-global-set-key 'insert (kbd "C-n") 'next-line)
-  (evil-global-set-key 'insert (kbd "C-p") 'previous-line)
-  (evil-global-set-key 'normal (kbd "C-n") 'evil-next-visual-line)
-  (evil-global-set-key 'normal (kbd "j") 'evil-next-visual-line)
-  (evil-global-set-key 'normal (kbd "C-p") 'evil-previous-visual-line)
-  (evil-global-set-key 'normal (kbd "k") 'evil-previous-visual-line)
-  (evil-mode))
-
-(use-package evil-collection
-  :after evil
-  :config
-  (evil-collection-init))
-
-(use-package evil-commentary
-  :config
-  (evil-commentary-mode))
-
-(use-package evil-surround
-  :config
-  (global-evil-surround-mode 1))
-
-(use-package avy
-  :after flyspell
-  :bind
-  ("C-'" . avy-goto-char))
-
 (use-package company-prescient
   :disabled t
   :after company
   :config
   (company-prescient-mode 1))
 
-(use-package orderless
-  :init
-  (setq completion-styles '(orderless)
-        completion-category-defaults nil
-        completion-category-overrides '((file (styles partial-completion)))))
-
 (use-package vertico
+  :disabled t
+  :custom-face
+  (vertico-current ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
   :init
   (setq enable-recursive-minibuffers t)
+  (setq vertico-resize t)
+  (setq vertico-cycle t)
   (vertico-mode))
-
-(use-package savehist
-  :init
-  (savehist-mode))
-
-;; (use-package prescient
-;;   :config
-;;   (prescient-persist-mode 1))
 
 (use-package corfu
   :straight (:type git :host github :repo "minad/corfu")
+  :custom-face
+  (corfu-current ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
+  (corfu-background ((t (:inherit nil :background "white"))))
+  (corfu-border ((t (:inherit nil :background "#D8DEE9"))))
   :init
   (setq completion-cycle-threshold 3)
   (setq tab-always-indent 'complete)
   ;; Optional customizations
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-  ;; (corfu-auto t)                 ;; Enable auto completion
-  (corfu-commit-predicate nil)   ;; Do not commit selected candidates on next input
-  ;; (corfu-quit-at-boundary t)     ;; Automatically quit at word boundary
-  ;; (corfu-quit-no-match t)        ;; Automatically quit if there is no match
+  (corfu-auto nil)                 ;; Enable auto completion
+  (corfu-commit-predicate t)   ;; Do not commit selected candidates on next input
+  (corfu-quit-at-boundary nil)     ;; Automatically quit at word boundary
+  (corfu-quit-no-match nil)        ;; Automatically quit if there is no match
   ;; (corfu-echo-documentation nil) ;; Do not show documentation in the echo area
 
   ;; Optionally use TAB for cycling, default is `corfu-complete'.
@@ -396,10 +444,27 @@
   :bind (("M-/" . dabbrev-completion)
          ("C-M-/" . dabbrev-expand)))
 
-(use-package selectrum
+(use-package orderless
+  ;; :disabled t
+  :custom
+  (completion-styles '(orderless))
+  :init
+  (setq orderless-skip-highlighting (lambda () selectrum-is-active))
+  (setq selectrum-refine-candidates-function #'orderless-filter)
+ (setq selectrum-highlight-candidates-function #'orderless-highlight-matches)
+)
+
+(use-package savehist
   :disabled t
+  :init
+  (savehist-mode))
+
+(use-package selectrum
+  ;; :disabled t
   :custom-face
-  (selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
+  ;; (selectrum-current-candidate ((t (:inherit nano-faded-i :extended t))))
+  (selectrum-current-candidate ((t (:inherit nano-subtle :extended t))))
+  ;; (selectrum-current-candidate ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
   ;; (selectrum-current-candidate ((t (:background "red" :extend t))))
   :init
   (setq selectrum-extend-current-candidate-highlight t)
@@ -407,10 +472,17 @@
   (selectrum-mode 1))
 
 (use-package selectrum-prescient
-  :disabled t
+  ;; :disabled t
   :after selectrum
   :config
-  (selectrum-prescient-mode 1))
+  (setq selectrum-prescient-enable-filtering nil)
+  (selectrum-prescient-mode 1)
+  (prescient-persist-mode 1))
+
+(use-package marginalia
+  ;; :disabled t ;; marginalia will corrupt vertico, disabledtemporarily
+  :init
+  (marginalia-mode))
 
 (use-package which-key
   :config
@@ -427,10 +499,6 @@
       (find-file (completing-read "Find recent file: " files nil t))))
   :config
   (recentf-mode t))
-
-(use-package key-chord
-  :config
-  (key-chord-mode 1))
 
 (use-package cider
   :after org
@@ -587,9 +655,18 @@
                    (interactive)
                    (unless (file-remote-p default-directory)
                      (all-the-icons-dired-mode))))
-   (deer-mode . all-the-icons-dired-mode)))
+   (deer-mode . all-the-icons-dired-mode))
+  :config/el-patch
+  (defun all-the-icons-dired--setup ()
+    "Setup `all-the-icons-dired'."
+    (setq-local tab-width (el-patch-swap 1 2))
+    (pcase-dolist (`(,file ,sym ,fn) all-the-icons-dired-advice-alist)
+      (with-eval-after-load file
+        (advice-add sym :around fn)))
+    (all-the-icons-dired--refresh)))
 
 (use-package projectile
+  :disabled t
   :init
   (setq projectile-auto-discover nil)
   (setq projectile-project-root-functions
@@ -603,19 +680,34 @@
   (define-key projectile-mode-map (kbd "s-p") 'projectile-command-map))
 
 (use-package mini-frame
-  :hook
-  (after-init . mini-frame-mode)
+  ;; :hook
+  ;; (after-init . mini-frame-mode)
   :custom
   ((mini-frame-show-parameters `((top . 0.2)
                                  (width . 0.6)
                                  (left . 0.5)
+                                 (left-fringe . 16)
+                                 (right-fringe .16)
+                                 ;; (child-frame-border-width . 2)
+                                 (child-frame-border-width . 2)
+                                 (internal-border-width . 2)
+                                 (foreground-color . ,nano-light-foreground)
+                                 (background-color . "white")
                                  ;; (background-color . ,nano-light-subtle)
+                                 ;; (background-color . "#ECEFF4")
                                  ))
-   (mini-frame-color-shift-step 10)
-   (mini-frame-advice-functions '(completing-read))
-   (resize-mini-frame t)))
+   ;; (mini-frame-color-shift-step 10)
+   (mini-frame-internal-border-color "#D8DEE9")
+   ;; (mini-frame-internal-border-color "black")
+   ;; (mini-frame-advice-functions '(selectrum-completing-read))
+   (mini-frame-advice-functions '(read-from-minibuffer))
+   (resize-mini-frame t))
+  :config
+  (mini-frame-mode))
 
 (use-package consult
+  :custom
+  (consult-find-command "fd -I -t f ")
   :init
   (defun consult-focus-lines-quit ()
     (interactive)
@@ -623,7 +715,8 @@
   :bind
   ("M-'" . consult-register-store)
   :config
-  (setq consult-project-root-function #'projectile-project-root)
+  ;; (setq consult-project-root-function #'projectile-project-root)
+  (setq consult-project-root-function nil)
   (defun find-fd (&optional dir initial)
     (interactive "P")
     (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
@@ -646,12 +739,6 @@
               ("!" . consult-flycheck)))
 
 (use-package undo-fu)
-
-(use-package tao-theme
-  ;; :config
-  ;; (set-face-attribute 'default nil :height 180)
-  ;; (load-theme 'tao-yang t)
-  )
 
 ;;; Install epdfinfo via 'brew install pdf-tools --HEAD' and then install the
 ;;; pdf-tools elisp via the use-package below. To upgrade the epdfinfo
@@ -728,23 +815,27 @@
         deft-use-filename-as-title t))
 
 (use-package eshell
+  :custom-face
+  ;; (eshell-prompt ((t (:inherit nano-subtle :extend t))))
+  (eshell-ls-directory ((t (:inherit nano-strong :extend t))))
+  (eshell-ls-backup ((t (:inherit nano-faded :extend t))))
   :init
-  (defun set-eshell-prompt-path ()
-    (interactive)
-    (let* ((pwd (eshell/pwd))
-           (splited (split-string pwd "/"))
-           (prefix (string-join (seq-take splited 3) "/"))
-           (rest (string-join (seq-drop splited 3) "/"))
-           (home (getenv "HOME")))
-      (if (equal home prefix)
-          (if (equal home pwd) "~" (concat "~/" rest))
-        pwd)))
-  ;; (setq eshell-prompt-function
-  ;;       (lambda nil
-  ;;         (concat
-  ;;          "\n"
-  ;;          (set-eshell-prompt-path)
-  ;;          "\nλ ")))
+  ;; (defun set-eshell-prompt-path ()
+  ;;   (interactive)
+  ;;   (let* ((pwd (eshell/pwd))
+  ;;          (splited (split-string pwd "/"))
+  ;;          (prefix (string-join (seq-take splited 3) "/"))
+  ;;          (rest (string-join (seq-drop splited 3) "/"))
+  ;;          (home (getenv "HOME")))
+  ;;     (if (equal home prefix)
+  ;;         (if (equal home pwd) "~" (concat "~/" rest))
+  ;;       pwd)))
+  (setq eshell-prompt-function
+        (lambda nil
+          (concat
+           "\n"
+           (propertize (eshell/pwd) 'face `(:inherit nano-faded))
+           "\nε ")))
   (defun eshell-other-window ()
     "Open a `shell' in a new window."
     (interactive)
@@ -1109,15 +1200,18 @@
  '(blink-cursor-mode nil)
  '(company-auto-commit t nil nil "Customized with use-package company")
  '(custom-safe-themes
-   '("03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+    '("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+ '(elfeed-feeds
+    '("http://www3.nhk.or.jp/rss/news/cat0.xml" "http://news.yahoo.co.jp/pickup/rss.xml" "http://sspai.me/feed" "https://rsshub.app/gamersky/news" "http://feeds.feedburner.com/butshesagirl" "https://d12frosted.io/atom.xml" "https://eli.thegreenplace.net/feeds/all.atom.xml" "https://omny.fm/shows/future-of-coding/playlists/podcast.rss" "https://www.extrema.is/articles/tag/index:haskell-books.rss" "http://okmij.org/ftp/rss.xml" "http://hypirion.com/rss/all" "https://protesilaos.com/codelog.xml" "http://sachachua.com/wp/category/emacs/feed/" "https://blog.tecosaur.com/tmio/rss.xml" "https://ag91.github.io/rss.xml" "https://www.with-emacs.com/rss.xml" "http://christiantietze.de/feed.atom" "https://rsshub.app/blogs/wangyin" "http://nullprogram.com/feed/" "https://planet.emacslife.com/atom.xml"))
  '(frame-background-mode 'light)
  '(menu-bar-mode nil)
  '(pdf-tools-handle-upgrades nil)
  '(safe-local-variable-values
-   '((org-roam-db-location . "~/Space/Notes/PARA/org-roam.db")
-     (org-roam-directory . "~/Space/Notes/PARA/")
-     (org-roam-db-location expand-file-name "./org-roam.db")
-     (org-roam-directory expand-file-name ".")))
+    '((org-roam-db-location . "~/Space/Notes/PARA/org-roam.db")
+      (org-roam-directory . "~/Space/Notes/PARA/")
+      (org-roam-db-location expand-file-name "./org-roam.db")
+      (org-roam-directory expand-file-name ".")))
+ '(send-mail-function 'smtpmail-send-it)
  '(show-paren-mode t)
  '(tool-bar-mode nil)
  '(tooltip-mode nil)
@@ -1125,6 +1219,8 @@
 
 (use-package dired
   :straight nil
+  :hook
+  (dired-mode . (lambda () (setq tab-width 2)))
   :init
   (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'\\|^.DS_STORE$\\|^.projectile$\\|^.git$")
   :hook
@@ -1163,7 +1259,8 @@
 
 (use-package shell-pop
   :custom
-  (shell-pop-shell-type '("vterm" "vterm" (lambda nil (vterm))))
+  ;; (shell-pop-shell-type '("vterm" "vterm" (lambda nil (vterm))))
+  (shell-pop-shell-type '("eshell" "*eshell*" (lambda nil (eshell))))
   (shell-pop-universal-key "s-t")
   :hook
   (shell-pop-in-after . (lambda () (edwina-arrange))))
@@ -1284,9 +1381,22 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(default ((t (:family "Monospace" :height 200))))
+ '(bookmark-face ((t (:background "grey86" :foreground "White"))))
+ '(corfu-background ((t (:inherit nil :background "white"))))
+ '(corfu-border ((t (:inherit nil :background "#D8DEE9"))))
+ '(corfu-current ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
+ '(eshell-ls-backup ((t (:inherit nano-faded :extend t))))
+ '(eshell-ls-directory ((t (:inherit nano-strong :extend t))))
+ '(eshell-prompt ((t (:inherit nano-salient :extend t))))
+ '(fixed-pitch ((t (:family "Monospace" :height 200))))
  '(iedit-occurrence ((t (:inherit nano-subtle))))
- ;; '(selectrum-current-candidate ((t (:inherit nano-subtle :extend t))))
- )
+ '(mode-line ((t (:family "Monospace" :height 150 :inherit nano-subtle :box (:line-width 3 :color "#ECEFF1")))))
+ '(mode-line-inactive ((t (:family "Monospace" :height 150 :background "#ECEFF1" :foreground "#B0BEC5" :box (:line-width 3 :color "#ECEFF1")))))
+ '(selectrum-current-candidate ((t (:inherit nano-subtle :extended t))))
+ '(variable-pitch ((t (:family "Serif" :height 200))))
+ '(window-divider-first-pixel ((t (:foreground "#ECEFF1"))))
+ '(window-divider-last-pixel ((t (:foreground "#ECEFF1")))))
 
 (use-package org-mind-map
   :init
@@ -1512,3 +1622,449 @@ Asks Finder for the path using AppleScript via `osascript', so
     (advice-add #'nov-content-unique-identifier :override #'my-nov-content-unique-identifier)))
 
 (use-package osx-dictionary)
+
+(use-package consult-dir
+  :straight (:type git :host github :repo "karthink/consult-dir")
+  :bind (("C-x C-d" . consult-dir)
+         ;; :map vertico-map
+         :map selectrum-minibuffer-map
+         ("C-x C-d" . consult-dir)
+         ("C-x C-j" . consult-dir-jump-file)))
+
+(use-package mu4e
+  :ensure nil
+  :defer t
+  :load-path "/opt/homebrew/Cellar/mu/1.6.3/share/emacs/site-lisp/mu/mu4e"
+  ;; :general
+  ;; (:keymaps 'mu4e-main-mode-map
+  ;;           :states '(normal)
+  ;;           "q"  (lambda () (interactive) (kill-buffer)))
+  ;; :init
+  ;; (defun mu4e-action-view-in-browser-webkit (msg)
+  ;;   (let ((url (concat "file://" (mu4e~write-body-to-html msg))))
+  ;;     (xwidget-webkit-browse-url url)))
+  :config
+  (general-define-key :keymaps 'mu4e-main-mode-map
+                      :states 'normal
+                      "q" (lambda () (interactive) (kill-buffer)))
+  
+  (setq message-send-mail-function 'smtpmail-send-it)
+
+  ;; Make sure plain text email flow, not hard new line
+  (setq mu4e-compose-format-flowed t)
+  
+  (setq mu4e-view-show-images t)
+  (when (fboundp 'imagemagick-register-types)
+    (imagemagick-register-types))
+
+  ;; (add-to-list 'mu4e-view-actions
+  ;; '("ViewInBrowser" . mu4e-action-view-in-browser-webkit) t)
+  ;; ;; for Emacs don't support webkit, using built-in external browser function
+  ;; ;; (add-to-list 'mu4e-view-actions
+  ;; ;; '("ViewInBrowser" . mu4e-action-view-in-browser) t)
+
+  (setq mu4e-completing-read-function 'completing-read)
+  ;; mbsync specific settings
+  (setq mu4e-change-filenames-when-moving t)
+  ;; Refresh every 10 minutes
+  (setq mu4e-update-interval (* 10 60))
+  (setq mu4e-get-mail-command "mbsync -a")
+  (setq mu4e-maildir "~/Mail")
+
+  (setq mu4e-drafts-folder "/gmail/[Gmail]/Drafts")
+  (setq mu4e-sent-folder "/gmail/[Gmail]/Sent Mail")
+  (setq mu4e-refile-folder "/gmail/[Gmail]/All Mail")
+  (setq mu4e-trash-folder "/gmail/[Gmail]/Trash")
+
+  (setq mu4e-context-policy 'pick-first)
+  (setq mu4e-compose-context-policy 'ask)
+  ;; (setq mu4e-compose-context-policy 'pick-first)
+
+  (setq mu4e-bookmarks '(("flag:flagged" "Flagged" ?f)
+                         (:name "Unread messages" :query "flag:unread AND NOT flag:trashed" :key 117)
+                         (:name "Today's messages" :query "date:today..now" :key 116)
+                         (:name "Last 7 days" :query "date:7d..now" :hide-unread t :key 119)
+                         (:name "Messages with images" :query "mime:image/*" :key 112)))
+
+  ;; (setq mu4e-maildir-shortcuts
+  ;;       '(("/gmail/Inbox" . ?i)
+  ;;         ("/gmail/[Gmail]/Sent Mail" . ?s)
+  ;;         ("/gmail/[Gmail]/Trash" . ?t)
+  ;;         ("/gmail/[Gmail]/Drafts" . ?d)
+  ;;         ("/gmail/[Gmail]/All Mail" . ?a)
+  ;;         ))
+  (setq mu4e-contexts
+        (list
+         (make-mu4e-context
+          :name "gmail"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/gmail" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "lasviceju@gmail.com")
+                  (user-full-name . "Laz")
+                  (mu4e-compose-signature . "Lasvice")
+                  (mu4e-drafts-folder  . "/gmail/[Gmail]/Drafts")
+                  (mu4e-sent-folder  . "/gmail/[Gmail]/Sent Mail")
+                  (mu4e-refile-folder  . "/gmail/[Gmail]/All Mail")
+                  (mu4e-trash-folder  . "/gmail/[Gmail]/Trash")
+                  (smtpmail-smtp-server . "smtp.gmail.com")
+                  (smtpmail-smtp-service . 465)
+                  (smtpmail-stream-type . ssl)
+                  ))
+         (make-mu4e-context
+          :name "outlook"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/outlook" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "lasviceju@outlook.com")
+                  (user-full-name . "JU GUIYUAN")
+                  (mu4e-refile-folder . "/outlook/Archive")
+                  (mu4e-sent-folder   . "/outlook/Sent")
+                  (mu4e-drafts-folder . "/outlook/Drafts")
+                  (mu4e-trash-folder  . "/outlook/Deleted")
+                  (smtpmail-smtp-server . "smtp-mail.outlook.com") ;; Different from the official instruction, don't know why
+                  (smtpmail-smtp-service . 587)
+                  (smtpmail-stream-type . starttls)
+                  ))
+         (make-mu4e-context
+          :name "yeah"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/yeah" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "undercloud@yeah.net")
+                  (user-full-name . "Undercloud")
+                  (mu4e-drafts-folder  . "/yeah/&g0l6P3ux-")
+                  (mu4e-sent-folder  . "/yeah/&XfJT0ZAB-")
+                  (mu4e-refile-folder  . "/yeah/Archive")
+                  (mu4e-trash-folder  . "/yeah/&XfJSIJZk-")
+                  (smtpmail-smtp-server . "smtp.yeah.net")
+                  (smtpmail-smtp-service . 465)
+                  (smtpmail-stream-type . ssl)
+                  ))
+         (make-mu4e-context
+          :name "jp-gmail"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/jp-gmail" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "lasvice.jp@gmail.com")
+                  (user-full-name . "lasvice")
+                  (mu4e-drafts-folder  . "/jp-gmail/[gmail]/drafts")
+                  (mu4e-sent-folder  . "/jp-gmail/[gmail]/sent mail")
+                  (mu4e-refile-folder  . "/jp-gmail/[gmail]/all mail")
+                  (mu4e-trash-folder  . "/jp-gmail/[gmail]/trash")
+                  (smtpmail-smtp-server . "smtp.gmail.com")
+                  (smtpmail-smtp-service . 465)
+                  (smtpmail-stream-type . ssl)
+                  ))
+         (make-mu4e-context
+          :name "tokyo-tech"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/tokyo-tech" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "ju.g.aa@m.titech.ac.jp")
+                  (user-full-name . "JU GUIYUAN")
+                  (mu4e-drafts-folder  . "/tokyo-tech/&Tgtm+DBN-") ; 下書き
+                  (mu4e-sent-folder  . "/tokyo-tech/&kAFP4Q-BOX") ; 送信 BOX
+                  ;; (mu4e-refile-folder  . "/jp-gmail/[gmail]/all mail") ; doesn't exists
+                  (mu4e-trash-folder  . "/tokyo-tech/&MLQw33ux-") ; ゴミ箱
+                  (smtpmail-smtp-server . "smtpv3.m.titech.ac.jp")
+                  (smtpmail-smtp-service . 465)
+                  (smtpmail-stream-type . ssl)
+                  ))
+         (make-mu4e-context
+          :name "anonymous-gmail"
+          :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/anonymous-gmail" (mu4e-message-field msg :maildir))))
+          :vars '((user-mail-address . "lazjunos@gmail.com")
+                  (user-full-name . "lazjunos")
+                  (mu4e-drafts-folder  . "/anonymous-gmail/[gmail]/drafts")
+                  (mu4e-sent-folder  . "/anonymous-gmail/[gmail]/sent mail")
+                  (mu4e-refile-folder  . "/anonymous-gmail/[gmail]/all mail")
+                  (mu4e-trash-folder  . "/anonymous-gmail/[gmail]/trash")
+                  (smtpmail-smtp-server . "smtp.gmail.com")
+                  (smtpmail-smtp-service . 465)
+                  (smtpmail-stream-type . ssl)
+                  ))
+         ))
+  (mu4e t) ;; Run mu4e in the background
+  )
+
+  ;; mu4e
+  ;; (add-to-list 'load-path "/opt/homebrew/Cellar/mu/1.6.3/share/emacs/site-lisp/mu/mu4e")
+  ;; (require 'mu4e)
+  ;; (setq
+  ;;  mue4e-headers-skip-duplicates  t
+  ;;  mu4e-view-show-images t
+  ;;  mu4e-view-show-addresses t
+  ;;  mu4e-compose-format-flowed nil
+  ;;  mu4e-date-format "%y/%m/%d"
+  ;;  mu4e-headers-date-format "%Y/%m/%d"
+  ;;  mu4e-change-filenames-when-moving t
+  ;;  mu4e-attachments-dir "~/Downloads"
+
+  ;;  mu4e-maildir       "~/Mail"   ;; top-level Maildir
+  ;;  ;; note that these folders below must start with /
+  ;;  ;; the paths are relative to maildir root
+  ;;   )
+
+  ;; ;; this setting allows to re-sync and re-index mail
+  ;; ;; by pressing U
+  ;; (setq mu4e-get-mail-command  "mbsync -a")
+
+  ;; (setq message-send-mail-function   'smtpmail-send-it)
+  ;; (setq user-full-name "JU GUIYUAN")
+  ;; (setq user-mail-address "lasviceju@gmail.com")
+
+  ;; (setq message-send-mail-function 'smtpmail-send-it
+  ;;       ;; smtpmail-starttls-credentials '(("smtp.gmail.com" 587 nil nil))
+  ;;       ;; smtpmail-auth-credentials '(("smtp.gmail.com" 587 "lasviceju@gmail.com" nil))
+  ;;       ;; smtpmail-default-smtp-server "smtp.gmail.com"
+  ;;       ;; smtpmail-smtp-server "smtp.gmail.com"
+  ;;       ;; smtpmail-smtp-service 587
+  ;;       starttls-gnutls-program "/opt/homebrew/bin/gnutls-cli"
+  ;;       starttls-extra-arguments nil
+  ;;       starttls-use-gnutls t)
+
+  ;; (setq mu4e-contexts
+  ;;       `(,(make-mu4e-context
+  ;;           :name "Yeah"
+  ;;           :enter-func (lambda () (mu4e-message "Entering Private context"))
+  ;;           :leave-func (lambda () (mu4e-message "Leaving Private context"))
+  ;;           :vars '((user-mail-address . "undercloud@yeah.net")
+  ;;                   (user-full-name . "Undercloud")
+  ;;                   (smtpmail-starttls-credentials . '(("smtp.gmail.com" 994 nil nil)))
+  ;;                   (smtpmail-auth-credentials . '(("smtp.gmail.com" 994 "undercloud@yeah.net" nil)))
+  ;;                   (smtpmail-smtp-server . "smtp.yeah.net")      
+  ;;                   (smtpmail-smtp-service . 994)
+  ;;                   (mu4e-refile-folder . "/yeah/Archive")
+  ;;                   (mu4e-sent-folder . "/yeah/&XfJT0ZAB-")
+  ;;                   (mu4e-drafts-folder . "/yeah/&g0l6P3ux-")
+  ;;                   (mu4e-trash-folder . "/yeah/&XfJSIJZk-")
+  ;;                   (mu4e-compose-signature .
+  ;;                                           (concat
+  ;;                                            "Undercloud\n"
+  ;;                                            "From nowhere\n"))))
+  ;;         ,(make-mu4e-context
+  ;;           :name "Outlook"
+  ;;           :enter-func (lambda () (mu4e-message "Switch to the Work context"))
+  ;;           ;; no leave-func
+  ;;           ;; we match based on the maildir of the message
+  ;;           ;; this matches maildir /Arkham and its sub-directories
+  ;;           :vars '( ( user-mail-address . "lasviceju@outlook.com" )
+  ;;                    ( user-full-name . "JU GUIYUAN" )
+  ;;                    (smtpmail-starttls-credentials . '(("smtp.office365.com" 589 nil nil)))
+  ;;                    (smtpmail-auth-credentials . '(("smtp.office365.com" 589 "lasviceju@outlook.com" nil)))
+  ;;                    (smtpmail-smtp-server . "smtp.office365.com")      
+  ;;                    (smtpmail-smtp-service . 589)
+  ;;                    (mu4e-refile-folder . "/outlook/Archive")
+  ;;                    (mu4e-sent-folder   . "/outlook/Sent")
+  ;;                    (mu4e-drafts-folder . "/outlook/Drafts")
+  ;;                    (mu4e-trash-folder  . "/outlook/Deleted")
+  ;;                    ( mu4e-compose-signature  .
+  ;;                      (concat
+  ;;                       "JU GUIYUAN\n"
+  ;;                       ;; "Miskatonic University, Dept. of Occult Sciences\n"))))
+  ;;                       "Tokyo, Japan"))))
+
+  ;;         ))
+
+  ;; set `mu4e-context-policy` and `mu4e-compose-policy` to tweak when mu4e should
+  ;; guess or ask the correct context, e.g.
+
+  ;; start with the first (default) context;
+  ;; default is to ask-if-none (ask when there's no context yet, and none match)
+  ;; (setq mu4e-context-policy 'pick-first)
+
+  ;; compose with the current context is no context matches;
+  ;; default is to ask
+  ;; (setq mu4e-compose-context-policy nil)
+(use-package alert
+  :config
+  (if (eq system-type 'darwin)
+      (setq
+       ;; alert-default-style 'notifier
+       alert-default-style 'osx-notifier
+       )))
+
+(use-package mu4e-alert
+  :straight
+  (:type git :host github :repo "iqbalansari/mu4e-alert"
+         :fork (:host github :repo "xzz53/mu4e-alert")) ;; Fixed the compatibility with mu4e 1.6.3
+  :hook
+  (after-init . mu4e-alert-enable-notifications)
+  :custom
+  (mu4e-alert-email-notification-types '(count))
+  :config
+  (mu4e-alert-set-default-style 'osx-notifier))
+
+(use-package mu4e-views
+  :disabled t
+  :after mu4e
+  :defer nil
+  :bind (:map mu4e-headers-mode-map
+	    ("v" . mu4e-views-mu4e-select-view-msg-method) ;; select viewing method
+	    ("M-n" . mu4e-views-cursor-msg-view-window-down) ;; from headers window scroll the email view
+	    ("M-p" . mu4e-views-cursor-msg-view-window-up) ;; from headers window scroll the email view
+        ("f" . mu4e-views-toggle-auto-view-selected-message) ;; toggle opening messages automatically when moving in the headers view
+        ("i" . mu4e-views-mu4e-view-as-nonblocked-html) ;; show currently selected email with all remote content
+	    )
+  :config
+  (setq mu4e-views-completion-method 'completing-read) ;; use ivy for completion
+  (setq mu4e-views-default-view-method "html") ;; make xwidgets default
+  (mu4e-views-mu4e-use-view-msg-method "html") ;; select the default
+  (setq mu4e-views-next-previous-message-behaviour 'stick-to-current-window) ;; when pressing n and p stay in the current window
+  (setq mu4e-views-auto-view-selected-message t)) ;; automatically open messages when moving in the headers view
+
+(use-package simple-modeline
+  :disabled t
+  :hook (after-init . simple-modeline-mode))
+
+(use-package vs-modeline
+  :disabled t
+  :straight (vs-modeline :type git
+                         :host github
+                         :repo "VojtechStep/vs-modeline.el")
+  :demand t
+  :config
+  (vs-modeline-mode))
+
+(use-package smart-mode-line
+  :disabled t
+  :config
+  (sml/setup))
+
+(use-package sky-color-clock
+  :disabled
+  :straight (:type git :host github :repo "zk-phi/sky-color-clock")
+  :config
+  (setq sky-color-clock-enable-emoji-icon t)
+  (sky-color-clock-initialize 35)
+  (push '(:eval (sky-color-clock)) (default-value 'mode-line-format)))
+
+(use-package org-mime
+  :hook
+  (org-mime-html . (lambda ()
+                     (org-mime-change-element-style
+                      "pre" (format "color: %s; background-color: %s; padding: 0.5em;"
+                                    "#E6E1DC" "#232323"))))
+  (message-send . org-mime-htmlize)
+  :init
+  (setq org-mime-export-options '(:section-numbers nil
+                                                   :with-author nil
+                                                   :with-toc nil)))
+;; Colorize hex code
+(use-package rainbow-mode
+  :config
+  (rainbow-mode))
+
+(use-package fireplace)
+
+(use-package snow
+  :straight (snow :host github :repo "alphapapa/snow.el"))
+
+(use-package helpful
+    :general
+    (:keymaps 'override
+              :states '(normal insert emacs visual)
+              "C-h f" #'helpful-callable
+              "C-h v" #'helpful-variable
+              "C-h k" #'helpful-key
+              ;; "C-c C-d" #'helpful-at-point
+              "C-h F" #'helpful-function
+              "C-h C" #'helpful-command))
+
+(use-package org-alert
+  :custom
+  (org-alert-interval 20)
+  :config
+  (org-alert-enable))
+
+(use-package eradio
+  :custom
+  (eradio-player '("mpv" "--no-video" "--no-terminal"))
+  :init
+  ;; https://www.internet-radio.com
+  (setq eradio-channels '(("def con - soma fm" . "https://somafm.com/defcon256.pls")          ;; electronica with defcon-speaker bumpers
+                          ("Drone Zone - soma fm" . "http://somafm.com/dronezone130.pls")
+                          ("Vaporwaves - soma fm" . "http://somafm.com/vaporwaves130.pls")
+                          ("Deep Space One - soma fm" . "http://somafm.com/deepspaceone130.pls")
+                          ("Smooth Jazz Florida" . "http://us4.internet-radio.com:8266/listen.pls")
+                          ("cyberia - lainon"  . "https://lainon.life/radio/cyberia.ogg.m3u") ;; cyberpunk-esque electronica
+                          ("cafe - lainon"     . "https://lainon.life/radio/cafe.ogg.m3u"))))  ;; boring ambient, but with lain)
+
+;; (defun my/launcher ()
+;;   (interactive)
+;;   (with-current-buffer (get-buffer-create "*launcher*")
+;;     (let ((frame (make-frame `((auto-raise . t)
+;;                                (name . "launcher")
+;;                                (minibuffer . only)
+;;                                (height . 10)
+;;                                (internal-border-width . 20)
+;;                                (left . 0.33)
+;;                                (left-fringe . 0)
+;;                                (line-spacing . 3)
+;;                                (menu-bar-lines . 0)
+;;                                (right-fringe . 0)
+;;                                (tool-bar-lines . 0)
+;;                                (top . 48)
+;;                                (undecorated . t) ; enable to remove frame border
+;;                                ;; (undecorated . nil) ; enable to remove frame border
+;;                                (unsplittable . t)
+;;                                (vertical-scroll-bars . nil)
+;;                                (width . 110)))))
+;;       (set-face-background 'internal-border nano-light-subtle frame)
+;;       (execute-extended-command nil)
+;;       ;; (completing-read "Emacs acronyms: "
+;;       ;;                  '(" Emacs: Escape-Meta-Alt-Control-Shift \n"
+;;       ;;                    " Emacs: Eight Megabytes And Constantly Swapping "
+;;       ;;                    " Emacs: Even a Master of Arts Comes Simpler "
+;;       ;;                    " Emacs: Each Manual's Audience is Completely Stupified "
+;;       ;;                    " Emacs: Eventually Munches All Computer Storage "
+;;       ;;                    " Emacs: Eradication of Memory Accomplished with Complete Simplicity "
+;;       ;;                    " Emacs: Easily Maintained with the Assistance of Chemical Solutions "
+;;       ;;                    " Emacs: Extended Macros Are Considered Superfluous "
+;;       ;;                    " Emacs: Every Mode Accelerates Creation of Software "
+;;       ;;                    " Emacs: Elsewhere Maybe All Commands are Simple "
+;;       ;;                    " Emacs: Emacs Makes All Computing Simple "
+;;       ;;                    " Emacs: Emacs Masquerades As Comfortable Shell "
+;;       ;;                    " Emacs: Emacs My Alternative Computer Story "
+;;       ;;                    " Emacs: Emacs Made Almost Completely Screwed "
+;;       ;;                    " Emacs: Each Mail A Continued Surprise "
+;;       ;;                    " Emacs: Eating Memory And Cycle-Sucking "
+;;       ;;                    " Emacs: Elvis Masterminds All Computer Software "
+;;       ;;                    " Emacs: Emacs Makes A Computer Slow" ))
+;;       (delete-frame frame)
+;;       (kill-buffer "*launcher*"))))
+
+(use-package elfeed-org
+  :init
+  (setq rmh-elfeed-org-files (list "~/Space/Notes/Org Roam/elfeed.org"))
+  :config
+  (elfeed-org))
+
+(use-package elfeed
+  :hook
+  (elfeed-show-mode . (lambda () (turn-on-olivetti-mode))))
+
+(use-package dashboard
+  :custom
+  (dashboard-startup-banner "~/.config/emacs/banner.png")
+  (dashboard-image-banner-max-height 256)
+  (dashboard-week-agenda t)
+  (dashboard-center-content t)
+  (dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        ;; (projects . 5)
+                        (agenda . 5)
+                        (registers . 5)))
+  :hook
+  (dashboard-mode . (lambda () (turn-on-olivetti-mode)))
+  :config
+  (dashboard-setup-startup-hook))

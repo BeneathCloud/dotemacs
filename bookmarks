@@ -1,0 +1,33 @@
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("emacs [elfeed]"
+ (location . "@6-months-ago +emacs +unread")
+ (tags "unread" "emacs")
+ (handler . elfeed-search-bookmark-handler))
+("sspai [elfeed]"
+ (location . "@6-months-ago +sspai")
+ (tags "sspai")
+ (handler . elfeed-search-bookmark-handler))
+(".config"
+ (filename . "~/.config/")
+ (front-context-string . "  /Users/las/.co")
+ (rear-context-string)
+ (position . 1))
+("init.lua"
+ (filename . "~/.config/hammerspoon/init.lua")
+ (front-context-string . "require(\"hs.ipc\"")
+ (rear-context-string)
+ (position . 1))
+("para.org"
+ (filename . "~/Space/Notes/Org Roam/para.org")
+ (front-context-string . ":PROPERTIES:\n:ID")
+ (rear-context-string)
+ (position . 1))
+("Drafts"
+ (filename . "~/Space/Drafts/")
+ (front-context-string . ".nrepl-port\n  -r")
+ (rear-context-string . "  5  7 16 14:08 ")
+ (position . 130))
+)

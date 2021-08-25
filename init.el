@@ -63,8 +63,8 @@
     ;; (setup-mode-line "dark")
     )
   :config
-  (advice-add 'nano-light :around 'polish@nano-light)
-  (advice-add 'nano-dark :around 'polish@nano-dark)
+  ;; (advice-add 'nano-light :around 'polish@nano-light)
+  ;; (advice-add 'nano-dark :around 'polish@nano-dark)
   (nano-light)
   )
 
@@ -95,6 +95,7 @@
   (fixed-pitch ((t (:family "Monospace" :height 200))))
   (default ((t (:family "Monospace" :height 200))))
   :init
+  (setq system-time-locale "en_US.UTF-8")
   ;; No startup  screen
   (setq inhibit-startup-screen t)
   ;; No startup message
@@ -201,13 +202,43 @@
         (shell-command-to-string command))))
   )
 
+(use-package dashboard
+  :after org
+  :init
+  (setq dashboard-startup-banner "~/.config/emacs/banner.png")
+  (setq dashboard-image-banner-max-height 256)
+  (setq dashboard-week-agenda t)
+  (setq dashboard-center-content t)
+  (setq dashboard-items '((recents  . 5)
+                        (bookmarks . 5)
+                        ;; (projects . 5)
+                        (agenda . 5)
+                        ;; (registers . 5))
+        ))
+  :hook
+  (dashboard-mode . (lambda () (turn-on-olivetti-mode)))
+  :config
+  (dashboard-setup-startup-hook))
+
 (use-package el-patch
   :init
   (setq el-patch-enable-use-package-integration t))
 
-(use-package key-chord
+(use-package key-hord
   :config
   (key-chord-mode 1))
+
+(use-package avy
+  :after key-chord
+  ;; :general
+  ;; (:keymaps 'override
+  ;;  :states '(insert normal visual emacs)
+  ;;          (general-chord "''") 'avy-goto-char-2)
+  ;; (:states '(insert)
+  ;;          (general-chord "jk") 'evil-normal-state
+  ;;          (general-chord "kj") 'evil-normal-state)
+  :config
+  (avy-setup-default))
 
 (use-package evil
   ;;:disabled
@@ -240,11 +271,6 @@
   :config
   (global-evil-surround-mode 1))
 
-(use-package avy
-  :after flyspell
-  :bind
-  ("C-'" . avy-goto-char))
-
 (use-package general
   ;; :after evil
   :config
@@ -253,6 +279,11 @@
    :keymaps 'evil-insert-state-map
    (general-chord "jk") 'evil-normal-state
    (general-chord "kj") 'evil-normal-state)
+  (general-define-key
+   :keymaps '(insert normal emacs visual)
+   (general-chord "''") 'avy-goto-word-0
+   (general-chord ";'") 'avy-goto-line
+   (general-chord "';") 'avy-goto-line)
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
@@ -300,11 +331,17 @@
    "ng" 'org-roam-graph
    "nc" 'org-roam-capture 
    "nj" 'org-roam-dailies-capture-today
-   "nt" 'org-roam-dailies-goto-today
+   "ndd" 'org-roam-dailies-goto-today
+   "ndD" 'org-roam-dailies-capture-today
+   "ndy" 'org-roam-dailies-goto-yesterday
+   "ndY" 'org-roam-dailies-capture-yesterday
+   "ndt" 'org-roam-dailies-goto-tomorrow
+   "ndT" 'org-roam-dailies-capture-tomorrow
+   "ndg" 'org-roam-dailies-goto-date
+   "ndG" 'org-roam-dailies-capture-date
+   "ndn" 'org-roam-dailies-goto-next-note
+   "ndp" 'org-roam-dailies-goto-previous-note
    ";" 'eval-expression
-   "'s" 'consult-register-store
-   "'l" 'consult-register-load
-   "''" 'consult-register
    ;; "e" 'consult-flycheck
    "e" 'elfeed
    "E" 'flycheck-list-errors
@@ -1302,8 +1339,12 @@
 
 (use-package org-roam
   ;; :straight (org-roam :type git :host github :repo "org-roam/org-roam" :branch "v2")
+  :straight (:host github :repo "org-roam/org-roam"
+             :files (:defaults "extensions/*"))
   :init
   (setq org-roam-v2-ack t)
+  ;; (add-to-list 'load-path "~/.config/emacs/straight/repos/org-roam/extensions/")
+  ;; (require 'org-roam-dailies)
   (defun org-hide-properties ()
     "Hide all org-mode headline property drawers in buffer. Could be slow if it has a lot of overlays."
     (interactive)
@@ -1330,9 +1371,10 @@
       (org-hide-properties)))
   :custom
   (org-roam-directory "~/Space/Notes/Org Roam/")
-  
-  (org-roam-setup)
-  (require 'org-roam-protocol ))
+  (org-roam-dailies-capture-templates '(("d" "default" entry "* %<%I:%M %p>: %?" :if-new
+  (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
+  :config
+  (org-roam-setup))
 
 (use-package progress-bar
   :straight (:repo "BeneathCloud/progress-bar"))
@@ -2053,18 +2095,15 @@ Asks Finder for the path using AppleScript via `osascript', so
   :hook
   (elfeed-show-mode . (lambda () (turn-on-olivetti-mode))))
 
-(use-package dashboard
-  :custom
-  (dashboard-startup-banner "~/.config/emacs/banner.png")
-  (dashboard-image-banner-max-height 256)
-  (dashboard-week-agenda t)
-  (dashboard-center-content t)
-  (dashboard-items '((recents  . 5)
-                        (bookmarks . 5)
-                        ;; (projects . 5)
-                        (agenda . 5)
-                        (registers . 5)))
-  :hook
-  (dashboard-mode . (lambda () (turn-on-olivetti-mode)))
-  :config
-  (dashboard-setup-startup-hook))
+(use-package ace-link
+  :general
+  (:keymaps '(Info-mode-map
+              help-mode-map
+              woman-mode-map
+              eww-mode-map
+              compilation-mode-map
+              helpful-mode-map
+              org-mode-map
+              mu4e-view-mode-map)
+            :states 'normal
+            "f" 'ace-link))

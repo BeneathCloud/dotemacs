@@ -224,7 +224,7 @@
   :init
   (setq el-patch-enable-use-package-integration t))
 
-(use-package key-hord
+(use-package key-chord
   :config
   (key-chord-mode 1))
 
@@ -425,7 +425,7 @@
   )
 
 (use-package company-prescient
-  :disabled t
+  ;; :disabled t
   :after company
   :config
   (company-prescient-mode 1))
@@ -441,6 +441,7 @@
   (vertico-mode))
 
 (use-package corfu
+  :disabled
   :straight (:type git :host github :repo "minad/corfu")
   :custom-face
   (corfu-current ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
@@ -560,7 +561,10 @@
 
 (use-package olivetti
   :init
-  (setq olivetti-body-width 80))
+  ;; (setq olivetti-body-width 80)
+  (setq olivetti-body-width 0.65)
+  (setq olivetti-minimum-body-width 72)
+  )
 
 (use-package lsp-mode
   :custom
@@ -582,7 +586,7 @@
 (use-package lsp-java)
 
 (use-package company
-  :disabled t
+  ;; :disabled t
   :hook ((prog-mode) . company-mode)
   :bind
   (:map
@@ -652,7 +656,7 @@
   :config
   (beacon-mode 1)
   (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
-                                              '(vterm-mode shell-mode eshell-mode term-mode)))
+                                              '(vterm-mode shell-mode eshell-mode term-mode elfeed-show-mode)))
   (add-hook 'beacon-dont-blink-predicates
             (lambda () (bound-and-true-p org-tree-slide-mode))))
 
@@ -873,6 +877,7 @@
            "\n"
            (propertize (eshell/pwd) 'face `(:inherit nano-faded))
            "\nε ")))
+  (setq eshell-prompt-regexp "^ε ")
   (defun eshell-other-window ()
     "Open a `shell' in a new window."
     (interactive)
@@ -922,7 +927,7 @@
   (setq org-tags-column -80)
   (setq org-cycle-open-archived-trees nil)
   (setq org-startup-folded 'show2levels)
-  (setq org-default-notes-file "~/Space/Notes/Org Roam/para.org")
+  (setq org-default-notes-file "~/Space/Notes/PARA/para.org")
   (setq org-export-with-tags nil)
   (setq org-latex-toc-command "\\tableofcontents \\clearpage") ; force new page after toc
   (defun my/list-attachments ()
@@ -1017,7 +1022,7 @@
   (setq org-ellipsis " ⭭ ")
   (setq org-agenda-hide-tags-regexp "ARCHIVE\\|para\\|ATTACH")
   (setq org-special-ctrl-a/e nil) ; C-e moves to before the ellipses, not after.
-  (setq org-cycle-separator-lines 0)
+  (setq org-cycle-separator-lines 2)
   (setq org-src-fontify-natively t)
   (setq org-src-tab-acts-natively t)
   (setq org-confirm-babel-evaluate nil)
@@ -1025,7 +1030,7 @@
         '((sequence "TODO(t!)" "NEXT(n!)" "|" "DONE(d!)" "HOLD(h!)" "DISCARDED(D!)")))
   (setq org-tag-alist '(("flag" . ?f)))
   (setq org-log-done 'time)
-  (setq org-agenda-files '("~/Space/Notes/Org Roam/para.org"))
+  (setq org-agenda-files '("~/Space/Notes/PARA/para.org"))
   ;; (setq org-agenda-files
   ;; (my/get-one-layer-subdirs org-roam-para-dirs))
   ;; don't show deadline befeore scheduled day
@@ -1037,7 +1042,7 @@
   (setq org-clock-persist 'history)
   (org-clock-persistence-insinuate)
   (setq org-capture-templates '(("i" "Inbox"
-                                 entry (file+headline "~/Space/Notes/Org Roam/para.org" "Inbox")
+                                 entry (file+headline "~/Space/Notes/PARA/para.org" "Inbox")
                                  "\n* %?\n\n"
                                  :prepend t
                                  :empty-lines 1)))
@@ -1237,17 +1242,17 @@
  '(blink-cursor-mode nil)
  '(company-auto-commit t nil nil "Customized with use-package company")
  '(custom-safe-themes
-    '("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+   '("4f1d2476c290eaa5d9ab9d13b60f2c0f1c8fa7703596fa91b235db7f99a9441b" "8146edab0de2007a99a2361041015331af706e7907de9d6a330a3493a541e5a6" "8d7b028e7b7843ae00498f68fad28f3c6258eda0650fe7e17bfb017d51d0e2a2" "97db542a8a1731ef44b60bc97406c1eb7ed4528b0d7296997cbb53969df852d6" "7eea50883f10e5c6ad6f81e153c640b3a288cd8dc1d26e4696f7d40f754cc703" "5784d048e5a985627520beb8a101561b502a191b52fa401139f4dd20acb07607" "b186688fbec5e00ee8683b9f2588523abdf2db40562839b2c5458fcfb322c8a4" "5f619a1e4a4827b0e0011c914f870e7a09252b3f4e117c64330af0a5bc0e3e1f" "d6d4e0512dcaae663f7bd304557d6bc8b78c576be5af9c0b62b8447fb79b5fde" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
  '(elfeed-feeds
-    '("http://www3.nhk.or.jp/rss/news/cat0.xml" "http://news.yahoo.co.jp/pickup/rss.xml" "http://sspai.me/feed" "https://rsshub.app/gamersky/news" "http://feeds.feedburner.com/butshesagirl" "https://d12frosted.io/atom.xml" "https://eli.thegreenplace.net/feeds/all.atom.xml" "https://omny.fm/shows/future-of-coding/playlists/podcast.rss" "https://www.extrema.is/articles/tag/index:haskell-books.rss" "http://okmij.org/ftp/rss.xml" "http://hypirion.com/rss/all" "https://protesilaos.com/codelog.xml" "http://sachachua.com/wp/category/emacs/feed/" "https://blog.tecosaur.com/tmio/rss.xml" "https://ag91.github.io/rss.xml" "https://www.with-emacs.com/rss.xml" "http://christiantietze.de/feed.atom" "https://rsshub.app/blogs/wangyin" "http://nullprogram.com/feed/" "https://planet.emacslife.com/atom.xml"))
+   '("http://www3.nhk.or.jp/rss/news/cat0.xml" "http://news.yahoo.co.jp/pickup/rss.xml" "http://sspai.me/feed" "https://rsshub.app/gamersky/news" "http://feeds.feedburner.com/butshesagirl" "https://d12frosted.io/atom.xml" "https://eli.thegreenplace.net/feeds/all.atom.xml" "https://omny.fm/shows/future-of-coding/playlists/podcast.rss" "https://www.extrema.is/articles/tag/index:haskell-books.rss" "http://okmij.org/ftp/rss.xml" "http://hypirion.com/rss/all" "https://protesilaos.com/codelog.xml" "http://sachachua.com/wp/category/emacs/feed/" "https://blog.tecosaur.com/tmio/rss.xml" "https://ag91.github.io/rss.xml" "https://www.with-emacs.com/rss.xml" "http://christiantietze.de/feed.atom" "https://rsshub.app/blogs/wangyin" "http://nullprogram.com/feed/" "https://planet.emacslife.com/atom.xml"))
  '(frame-background-mode 'light)
  '(menu-bar-mode nil)
  '(pdf-tools-handle-upgrades nil)
  '(safe-local-variable-values
-    '((org-roam-db-location . "~/Space/Notes/PARA/org-roam.db")
-      (org-roam-directory . "~/Space/Notes/PARA/")
-      (org-roam-db-location expand-file-name "./org-roam.db")
-      (org-roam-directory expand-file-name ".")))
+   '((org-roam-db-location . "~/Space/Notes/PARA/org-roam.db")
+     (org-roam-directory . "~/Space/Notes/PARA/")
+     (org-roam-db-location expand-file-name "./org-roam.db")
+     (org-roam-directory expand-file-name ".")))
  '(send-mail-function 'smtpmail-send-it)
  '(show-paren-mode t)
  '(tool-bar-mode nil)
@@ -1343,6 +1348,12 @@
              :files (:defaults "extensions/*"))
   :init
   (setq org-roam-v2-ack t)
+  ;; (setq org-roam-db-node-include-function
+  ;;       (lambda ()
+  ;;         (not (-any? (lambda (x) (eq 'para (read x))) (org-get-tags)))))
+  ;; (setq org-roam-db-node-include-function
+  ;;     (lambda ()
+  ;;       (not (member "ATTACH" (org-get-tags)))))
   ;; (add-to-list 'load-path "~/.config/emacs/straight/repos/org-roam/extensions/")
   ;; (require 'org-roam-dailies)
   (defun org-hide-properties ()
@@ -1371,8 +1382,18 @@
       (org-hide-properties)))
   :custom
   (org-roam-directory "~/Space/Notes/Org Roam/")
+  (org-roam-capture-templates '(("d" "default" plain "%?" :if-new
+                                 (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+                                 :unnarrowed t)
+                              ("l" "literature note" plain "%?" :if-new
+                                 (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+filetags: :literature:\n#+title: ${title}\n")
+                                 :unnarrowed t)
+                              ("c" "concept note" plain "%?" :if-new
+                                 (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+filetags: :concept:\n#+title: ${title}\n")
+                                 :unnarrowed t)
+                              ))
   (org-roam-dailies-capture-templates '(("d" "default" entry "* %<%I:%M %p>: %?" :if-new
-  (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
+                                         (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
   :config
   (org-roam-setup))
 
@@ -1435,8 +1456,9 @@
  '(iedit-occurrence ((t (:inherit nano-subtle))))
  '(mode-line ((t (:family "Monospace" :height 150 :inherit nano-subtle :box (:line-width 3 :color "#ECEFF1")))))
  '(mode-line-inactive ((t (:family "Monospace" :height 150 :background "#ECEFF1" :foreground "#B0BEC5" :box (:line-width 3 :color "#ECEFF1")))))
+ '(org-indent ((t (:foreground "white"))))
  '(selectrum-current-candidate ((t (:inherit nano-subtle :extended t))))
- '(variable-pitch ((t (:family "Serif" :height 200))))
+ '(variable-pitch ((t (:family "Variable Serif" :height 200))))
  '(window-divider-first-pixel ((t (:foreground "#ECEFF1"))))
  '(window-divider-last-pixel ((t (:foreground "#ECEFF1")))))
 
@@ -2093,7 +2115,9 @@ Asks Finder for the path using AppleScript via `osascript', so
 
 (use-package elfeed
   :hook
-  (elfeed-show-mode . (lambda () (turn-on-olivetti-mode))))
+  (elfeed-show-mode . (lambda ()
+                        (turn-on-olivetti-mode)
+                        (hide-mode-line-mode))))
 
 (use-package ace-link
   :general
@@ -2104,6 +2128,40 @@ Asks Finder for the path using AppleScript via `osascript', so
               compilation-mode-map
               helpful-mode-map
               org-mode-map
+              elfeed-show-mode-map
               mu4e-view-mode-map)
             :states 'normal
             "f" 'ace-link))
+
+(use-package hledger-mode
+  :mode ("\\.journal\\'" "\\.hledger\\'")
+  :bind (("C-c j" . hledger-run-command)
+         :map hledger-mode-map
+         ("C-c e" . hledger-jentry)
+         ("M-p" . hledger/prev-entry)
+         ("M-n" . hledger/next-entry))
+  :init
+  (add-to-list 'company-backends 'hledger-company)
+  (setq hledger-jfile "~/Finance/2021.journal")
+  )
+
+(use-package doom-themes
+  :config
+  ;; Global settings (defaults)
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t) ; if nil, italics is universally disabled
+  ;; (load-theme 'doom-one t)
+  )
+
+(use-package focus)
+
+(use-package elisp-demos
+  :config
+  ;; (advice-add 'describe-function-1 :after #'elisp-demos-advice-describe-function-1)
+  (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+
+(use-package mlscroll
+  :straight (:type git :host github :repo "jdtsmith/mlscroll")
+  :config
+  (setq mlscroll-shortfun-min-width 11) ;truncate which-func, for default mode-line-format's
+  (mlscroll-mode 1))

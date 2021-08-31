@@ -112,7 +112,8 @@
   ;; No dialog box
   (setq use-dialog-box nil)
   ;; No popup windows
-  (setq pop-up-windows nil)
+  ;; (setq pop-up-windows nil)
+  (setq pop-up-windows t)
   ;; No empty line indicators
   (setq indicate-empty-lines nil)
   ;; No cursor in inactive windows
@@ -287,6 +288,15 @@
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
+   "s-m" 'maximize-window
+   "s-j" 'other-window
+   "s-k" (lambda () (interactive) (other-window -1))
+   "s-<return>" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+   "s-S-<return>" (lambda () (interactive)(split-window-vertically) (other-window 1))
+   "s-J" 'enlarge-window
+   "s-K" 'shrink-window
+   "s-H" 'shrink-window-horizontally
+   "s-L" 'enlarge-window-horizontally
    "s-d" 'osx-dictionary-search-word-at-point
    "s-D" 'osx-dictionary-search-input
    ;; "s-t" 'vterm-other-window
@@ -644,6 +654,7 @@
   )
 
 (use-package edwina
+  :disabled
   :custom
   (edwina-mfact 0.55)
   (edwina-narrow-threshold 115)
@@ -922,7 +933,7 @@
                      (org-display-inline-images))))
   :init
   (setq org-bookmark-names-plist nil) ; don't add bookmark when capture, refile... the highlight is annoying 
-  (setq org-agenda-window-setup 'current-window)
+  ;; (setq org-agenda-window-setup 'current-window)
   (setq org-attach-use-inheritance t)
   (setq org-tags-column -80)
   (setq org-cycle-open-archived-trees nil)
@@ -2165,3 +2176,10 @@ Asks Finder for the path using AppleScript via `osascript', so
   :config
   (setq mlscroll-shortfun-min-width 11) ;truncate which-func, for default mode-line-format's
   (mlscroll-mode 1))
+
+(use-package pocket-reader
+  :bind
+  (:map pocket-reader-mode-map
+        ()))
+
+(use-package literate-calc-mode)

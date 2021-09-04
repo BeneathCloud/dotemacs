@@ -21,7 +21,7 @@
  (rear-context-string)
  (position . 1))
 ("para.org"
- (filename . "~/Space/Notes/Org Roam/para.org")
+ (filename . "~/Space/Notes/PARA/para.org")
  (front-context-string . ":PROPERTIES:\n:ID")
  (rear-context-string)
  (position . 1))

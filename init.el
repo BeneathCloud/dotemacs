@@ -28,7 +28,7 @@
  aligned respectively."
     (let* ((available-width (- (window-total-width)
                                (length left)
-                               2
+
                                (/ (window-right-divider-width)
                                   (window-font-width nil 'default)))))
       (format (format " %%s %%%ds " available-width) left right)))
@@ -334,7 +334,8 @@
    :prefix "SPC"
    :states '(normal visual)
    :keymaps 'override
-   "m" 'mu4e
+   "mm" 'mu4e
+   "mu" (lambda () (interactive) (mu4e-headers-search "flag:unread AND NOT flag:trashed"))
    "nb" 'org-roam-buffer-toggle
    "nn" 'org-roam-node-find
    "ni" 'org-roam-node-insert
@@ -359,7 +360,9 @@
    "K" 'consult-focus-lines-quit
    "A" 'iedit-mode
    "a" 'org-agenda
-   "s" 'consult-isearch
+   "ss" 'slack-select-unread-rooms
+   "si" 'slack-im-select
+   "sc" 'slack-channel-select
    "L" 'consult-ripgrep
    "l" 'consult-line
    "o" 'consult-outline
@@ -432,6 +435,15 @@
    :states '(normal visual insert emacs)
    :keymaps 'override
    "M-SPC" 'consult-buffer)
+
+  (general-define-key
+   :states '(normal visual)
+   :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map eshell-mode-map vterm-mode-map)
+   "f" 'avy-goto-word-0
+   "F" 'avy-goto-char-2
+   "C-f" 'evil-avy-goto-line
+   "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
+   "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1)))
   )
 
 (use-package company-prescient
@@ -1253,10 +1265,11 @@
  '(blink-cursor-mode nil)
  '(company-auto-commit t nil nil "Customized with use-package company")
  '(custom-safe-themes
-   '("4f1d2476c290eaa5d9ab9d13b60f2c0f1c8fa7703596fa91b235db7f99a9441b" "8146edab0de2007a99a2361041015331af706e7907de9d6a330a3493a541e5a6" "8d7b028e7b7843ae00498f68fad28f3c6258eda0650fe7e17bfb017d51d0e2a2" "97db542a8a1731ef44b60bc97406c1eb7ed4528b0d7296997cbb53969df852d6" "7eea50883f10e5c6ad6f81e153c640b3a288cd8dc1d26e4696f7d40f754cc703" "5784d048e5a985627520beb8a101561b502a191b52fa401139f4dd20acb07607" "b186688fbec5e00ee8683b9f2588523abdf2db40562839b2c5458fcfb322c8a4" "5f619a1e4a4827b0e0011c914f870e7a09252b3f4e117c64330af0a5bc0e3e1f" "d6d4e0512dcaae663f7bd304557d6bc8b78c576be5af9c0b62b8447fb79b5fde" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
+   '("249e100de137f516d56bcf2e98c1e3f9e1e8a6dce50726c974fa6838fbfcec6b" "5a00018936fa1df1cd9d54bee02c8a64eafac941453ab48394e2ec2c498b834a" "a131602c676b904a5509fff82649a639061bf948a5205327e0f5d1559e04f5ed" "c95813797eb70f520f9245b349ff087600e2bd211a681c7a5602d039c91a6428" "f00a605fb19cb258ad7e0d99c007f226f24d767d01bf31f3828ce6688cbdeb22" "733ef3e3ffcca378df65a5b28db91bf1eeb37b04d769eda28c85980a6df5fa37" "d516f1e3e5504c26b1123caa311476dc66d26d379539d12f9f4ed51f10629df3" "06ed754b259cb54c30c658502f843937ff19f8b53597ac28577ec33bb084fa52" "11cc65061e0a5410d6489af42f1d0f0478dbd181a9660f81a692ddc5f948bf34" "6128465c3d56c2630732d98a3d1c2438c76a2f296f3c795ebda534d62bb8a0e3" "3c7a784b90f7abebb213869a21e84da462c26a1fda7e5bd0ffebf6ba12dbd041" "e266d44fa3b75406394b979a3addc9b7f202348099cfde69e74ee6432f781336" "e8567ee21a39c68dbf20e40d29a0f6c1c05681935a41e206f142ab83126153ca" "d9a28a009cda74d1d53b1fbd050f31af7a1a105aa2d53738e9aa2515908cac4c" "2ce76d65a813fae8cfee5c207f46f2a256bac69dacbb096051a7a8651aa252b0" "4f1d2476c290eaa5d9ab9d13b60f2c0f1c8fa7703596fa91b235db7f99a9441b" "8146edab0de2007a99a2361041015331af706e7907de9d6a330a3493a541e5a6" "8d7b028e7b7843ae00498f68fad28f3c6258eda0650fe7e17bfb017d51d0e2a2" "97db542a8a1731ef44b60bc97406c1eb7ed4528b0d7296997cbb53969df852d6" "7eea50883f10e5c6ad6f81e153c640b3a288cd8dc1d26e4696f7d40f754cc703" "5784d048e5a985627520beb8a101561b502a191b52fa401139f4dd20acb07607" "b186688fbec5e00ee8683b9f2588523abdf2db40562839b2c5458fcfb322c8a4" "5f619a1e4a4827b0e0011c914f870e7a09252b3f4e117c64330af0a5bc0e3e1f" "d6d4e0512dcaae663f7bd304557d6bc8b78c576be5af9c0b62b8447fb79b5fde" "c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" "03f28a4e25d3ce7e8826b0a67441826c744cbf47077fb5bc9ddb18afe115005f" "a27c00821ccfd5a78b01e4f35dc056706dd9ede09a8b90c6955ae6a390eb1c1e" "31302cb8f88ee2ca06fa2324b3fc31366443db6d066626154ef0dd64f267cbc4" "cc0dbb53a10215b696d391a90de635ba1699072745bf653b53774706999208e3" "3e335d794ed3030fefd0dbd7ff2d3555e29481fe4bbb0106ea11c660d6001767" "bb08c73af94ee74453c90422485b29e5643b73b05e8de029a6909af6a3fb3f58" "1b8d67b43ff1723960eb5e0cba512a2c7a2ad544ddb2533a90101fd1852b426e" "82d2cac368ccdec2fcc7573f24c3f79654b78bf133096f9b40c20d97ec1d8016" "515e9dd9749ef52a8e1b63427b50b4dc68afb4a16b1a9cabfbcf6b4897f2c501" "e3b2bad7b781a968692759ad12cb6552bc39d7057762eefaf168dbe604ce3a4b" default))
  '(elfeed-feeds
    '("http://www3.nhk.or.jp/rss/news/cat0.xml" "http://news.yahoo.co.jp/pickup/rss.xml" "http://sspai.me/feed" "https://rsshub.app/gamersky/news" "http://feeds.feedburner.com/butshesagirl" "https://d12frosted.io/atom.xml" "https://eli.thegreenplace.net/feeds/all.atom.xml" "https://omny.fm/shows/future-of-coding/playlists/podcast.rss" "https://www.extrema.is/articles/tag/index:haskell-books.rss" "http://okmij.org/ftp/rss.xml" "http://hypirion.com/rss/all" "https://protesilaos.com/codelog.xml" "http://sachachua.com/wp/category/emacs/feed/" "https://blog.tecosaur.com/tmio/rss.xml" "https://ag91.github.io/rss.xml" "https://www.with-emacs.com/rss.xml" "http://christiantietze.de/feed.atom" "https://rsshub.app/blogs/wangyin" "http://nullprogram.com/feed/" "https://planet.emacslife.com/atom.xml"))
  '(frame-background-mode 'light)
+ '(hsys-org-enable-smart-keys 'buttons)
  '(menu-bar-mode nil)
  '(pdf-tools-handle-upgrades nil)
  '(safe-local-variable-values
@@ -1456,7 +1469,7 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(default ((t (:family "Monospace" :height 200))))
- '(bookmark-face ((t (:background "grey86" :foreground "White"))))
+ '(bookmark-face ((t (:inherit nano-subtle))))
  '(corfu-background ((t (:inherit nil :background "white"))))
  '(corfu-border ((t (:inherit nil :background "#D8DEE9"))))
  '(corfu-current ((t (:inherit nil :background "#ECEFF4" :foreground "black" :extended t))))
@@ -1464,6 +1477,7 @@
  '(eshell-ls-directory ((t (:inherit nano-strong :extend t))))
  '(eshell-prompt ((t (:inherit nano-salient :extend t))))
  '(fixed-pitch ((t (:family "Monospace" :height 200))))
+ '(hbut-flash ((t (:inherit nano-popout-i))))
  '(iedit-occurrence ((t (:inherit nano-subtle))))
  '(mode-line ((t (:family "Monospace" :height 150 :inherit nano-subtle :box (:line-width 3 :color "#ECEFF1")))))
  '(mode-line-inactive ((t (:family "Monospace" :height 150 :background "#ECEFF1" :foreground "#B0BEC5" :box (:line-width 3 :color "#ECEFF1")))))
@@ -2145,6 +2159,7 @@ Asks Finder for the path using AppleScript via `osascript', so
             "f" 'ace-link))
 
 (use-package hledger-mode
+:disabled
   :mode ("\\.journal\\'" "\\.hledger\\'")
   :bind (("C-c j" . hledger-run-command)
          :map hledger-mode-map
@@ -2163,7 +2178,6 @@ Asks Finder for the path using AppleScript via `osascript', so
         doom-themes-enable-italic t) ; if nil, italics is universally disabled
   ;; (load-theme 'doom-one t)
   )
-
 (use-package focus)
 
 (use-package elisp-demos
@@ -2183,3 +2197,126 @@ Asks Finder for the path using AppleScript via `osascript', so
         ()))
 
 (use-package literate-calc-mode)
+
+(use-package annotate)
+
+(use-package flyspell-correct
+  :after flyspell
+  :bind (:map flyspell-mode-map ("C-;" . flyspell-correct-wrapper)))
+
+(use-package hyperbole
+  :disabled
+  :bind
+  (:map hyperbole-mode-map
+        ("S-<return>" . hkey-either)))
+
+(use-package slack
+  :demand
+  :commands (slack-start)
+  :init
+  (setq slack-buffer-emojify t) ;; if you want to enable emoji, default nil
+  (setq slack-prefer-current-team t)
+  :config
+  (slack-register-team
+   :name "Programming System Group"
+   :default t
+   :token (auth-source-pick-first-password
+           :host "psg-titech.slack.com"
+           :login "lasviceju@gmail.com")
+   :cookie (auth-source-pick-first-password
+            :host "psg-titech.slack.com"
+            :user "lasviceju@gmail.com^cookie")
+   :subscribed-channels '(calendar events general random seminar thesis embedded)
+   :full-and-display-names t)
+  :config
+  (slack-start))
+
+(use-package emms
+  :disabled
+  :config
+  (emms-all)
+  (emms-default-players))
+
+(use-package chrome
+  :disabled
+  :straight (:type git :host github :repo "anticomputer/chrome.el"))
+
+(use-package indium
+  :disabled)
+
+(use-package kite-mini
+  :disabled)
+
+(use-package wooky
+  :straight (:type git :host github :repo "katspaugh/wooky.el")
+  :bind
+  (:map org-mode-map
+        ("S-<return>" . my/video-noter))
+  :config
+  (defun my/eval-in-youtube (exp &optional callback)
+    "(callback value)"
+    (wooky--call-rpc
+     "Runtime.evaluate"
+     (list
+      :expression
+      exp
+      :returnByValue t)
+     (lambda (data)
+       (if callback
+           (funcall callback (wooky--on-eval data))
+         (wooky--on-eval data)))))
+
+  (defun my/insert-youtube-current-time ()
+    (interactive)
+    (my/eval-in-youtube "Math.floor(document.getElementById('movie_player').getCurrentTime())"
+                        (lambda (val)
+                          (org-insert-heading)
+                          (insert (my/format-youtube-ts (string-to-number val))))))
+
+  (defun my/format-youtube-ts (second)
+    (interactive)
+    (let* ((hour (/ second 3600))
+           (minute (/ (mod second 3600) 60))
+           (second (- second (* hour 3600) (* minute 60))))
+      (format "%02d:%02d:%02d" hour minute second)))
+
+  (defun my/youtube-ts-to-second (ts)
+    (interactive)
+    (let ((splited (-map 'string-to-number (s-split ":" ts))))
+      (+ (* (first splited) 3600)
+         (* (second splited) 60)
+         (third splited))))
+
+  (defun my/jump-to-youtube-time ()
+    "ts STRING"
+    (interactive)
+    (if-let ((thing (first (s-split " " (org-entry-get nil "ITEM"))))
+             (ts (string-match "^[0-9]\\{2\\}:[0-9]\\{2\\}:[0-9]\\{2\\}$" thing))
+             (sec (my/youtube-ts-to-second thing)))
+        (if (bound-and-true-p wooky-mode)
+            (progn (my/eval-in-youtube
+                    (format "document.getElementById('movie_player').seekTo(%d)"
+                            sec)))
+          (progn (shell-command (concat "open -a \"/Applications/Google Chrome.app\" \""
+                                 (format "%s&t=%ds"
+                                         (org-entry-get (point-min) "ROAM_REFS")
+                                         sec)
+                                 "\""))
+                 (wooky-mode)))
+      (message "%s" "Cannot find youtube timestamp")))
+  )
+
+(use-package kaolin-themes)
+
+(use-package sicp)
+
+(use-package ctable)
+
+(use-package xwwp-full
+  :straight (:type git :host github :repo "BlueFlo0d/xwwp" :files ("*"))
+  :general (:states '(normal visual)
+            :maps xwidget-webkit-mode-map
+              "F"  'xwwp-follow-link
+              "f"  'xwwp-ace-toggle)
+  :init
+  (require 'xwwp-full))

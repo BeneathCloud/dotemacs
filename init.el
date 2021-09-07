@@ -402,7 +402,7 @@
    "C-a" 'beginning-of-visual-line
    "C-e" 'end-of-visual-line
    "C-k" 'kill-line
-   "C-\\" 'universal-argument
+   "C-S-u" 'universal-argument
    )
 
   (general-define-key
@@ -1329,6 +1329,11 @@
   :straight nil
   :hook
   (dired-mode . (lambda () (setq tab-width 2)))
+  :general
+  (:keymaps 'dired-mode-map
+            :states '(normal visual)
+            "h" 'dired-up-directory
+            "l" 'dired-open-file)
   :init
   (setq dired-omit-files "\\`[.]?#\\|\\`[.][.]?\\'\\|^.DS_STORE$\\|^.projectile$\\|^.git$")
   :hook
@@ -2453,3 +2458,18 @@ Asks Finder for the path using AppleScript via `osascript', so
   ;; auto-updating embark collect buffer
   :hook
   (embark-collect-mode . consult-preview-at-point-mode))
+
+(use-package ranger
+  :disabled
+  :hook
+  (ranger-mode . (lambda () (setq truncate-lines t)))
+  (ranger-parent-dir . (lambda () (setq truncate-lines t))))
+(put 'dired-find-alternate-file 'disabled nil)
+
+(use-package dired-hide-dotfiles
+  :general
+  (:keymaps 'dired-mode-map
+            :states '(normal visual)
+            "." 'dired-hide-dotfiles-mode)
+  :hook
+  (dired-mode . dired-hide-dotfiles-mode))

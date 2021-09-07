@@ -95,6 +95,9 @@
   (fixed-pitch ((t (:family "Monospace" :height 200))))
   (default ((t (:family "Monospace" :height 200))))
   :init
+  ;; emacs-mac no-title-bar patch
+  (setq mac-use-title-bar t)
+  
   (setq system-time-locale "en_US.UTF-8")
   ;; No startup  screen
   (setq inhibit-startup-screen t)

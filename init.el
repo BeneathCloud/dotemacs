@@ -619,8 +619,9 @@
    ;; ;; ("<return>" . company-complete-selection)
    ;; ;; ("SPC" . company-complete-selection)
    ;; ("<tab>" . company-complete-selection)
-   :map company-mode-map
-   ("<tab>" . company-indent-or-complete-common)
+   ("<tab>" . company-complete-selection)
+   ;; :map company-mode-map
+   ;; ("<tab>" . company-indent-or-complete-common)
    )
   :custom
   (company-auto-complete t)

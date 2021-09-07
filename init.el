@@ -709,6 +709,8 @@
   (edwina-mode 1))
 
 (use-package beacon
+  :init
+  (setq beacon-blink-when-window-scrolls nil)
   :config
   (beacon-mode 1)
   (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes

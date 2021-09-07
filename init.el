@@ -283,14 +283,15 @@
    :keymaps 'evil-insert-state-map
    (general-chord "jk") 'evil-normal-state
    (general-chord "kj") 'evil-normal-state)
-  (general-define-key
-   :keymaps '(insert normal emacs visual)
-   (general-chord "''") 'avy-goto-word-0
-   (general-chord ";'") 'avy-goto-line
-   (general-chord "';") 'avy-goto-line)
+  ;; (general-define-key
+  ;;  :keymaps '(insert normal emacs visual)
+  ;;  (general-chord "''") 'avy-goto-word-0
+  ;;  (general-chord ";'") 'avy-goto-line
+  ;;  (general-chord "';") 'avy-goto-line)
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
+   "s-n" 'make-frame
    "s-m" 'maximize-window
    "s-j" 'other-window
    "s-k" (lambda () (interactive) (other-window -1))
@@ -303,7 +304,7 @@
    "s-d" 'osx-dictionary-search-word-at-point
    "s-D" 'osx-dictionary-search-input
    ;; "s-t" 'vterm-other-window
-   ;; "s-t" 'eshell-other-window
+   "s-t" 'eshell-other-window
    "s-u" 'update-progress-bar-at-point
    "s-y" 'backward-progress-bar-at-point
    "s-i" 'forward-progress-bar-at-point
@@ -312,7 +313,7 @@
    "s-[" 'winner-undo
    "s-]" 'winner-redo
    "s-f" 'consult-line
-   "s-;" 'eval-expression
+   "s-;" 'symex-mode-interface
    "s-o" 'delete-other-windows
    "s-a" 'mark-whole-buffer
    "s-v" 'yank
@@ -442,11 +443,39 @@
   (general-define-key
    :states '(normal visual)
    :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map eshell-mode-map vterm-mode-map)
+   "`" 'beacon-blink
    "f" 'avy-goto-word-0
    "F" 'avy-goto-char-2
    "C-f" 'evil-avy-goto-line
    "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
    "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1)))
+
+  (general-define-key
+   ;; :keymaps 'pdf-continuous-scroll-mode-map
+   :keymaps 'pdf-view-mode-map
+   :states '(normal visual)
+   "j" 'pdf-continuous-scroll-forward
+   "k" 'pdf-continuous-scroll-backward
+   "J" 'pdf-continuous-next-page
+   "K" 'pdf-continuous-previous-page
+   "C-d" 'pdf-view-scroll-up-or-next-page
+   "C-u" 'pdf-view-scroll-down-or-previous-page
+   "M" 'pdf-cscroll-toggle-mode-line
+   "gt" 'pdf-cscroll-view-goto-page
+   "gg" 'pdf-cscroll-first-page
+   "G" 'pdf-cscroll-last-page
+   "q" 'pdf-cscroll-kill-buffer-and-windows)
+
+  (general-define-key
+   :keymaps 'pdf-outline-buffer-mode-map
+   :states '(normal visual)
+   "<return>" (lambda ()
+                (interactive)
+                (let ((link (pdf-outline-link-at-pos (point))))
+                  (pdf-outline-quit)
+                  (unless link
+                    (error "Nothing to follow here"))
+                  (pdf-cscroll-view-goto-page (cdr (assoc 'page link))))))
   )
 
 (use-package company-prescient

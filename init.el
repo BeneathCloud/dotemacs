@@ -645,9 +645,9 @@
   :bind
   (:map
    company-active-map
-   ;; ("C-n"   . company-select-next)
-   ;; ("C-p"   . company-select-previous)
-   ;; ("C-d"   . company-show-doc-buffer)
+   ("C-n"   . company-select-next)
+   ("C-p"   . company-select-previous)
+   ("C-d"   . company-show-doc-buffer)
    ;; ;; ("<return>" . company-complete-selection)
    ;; ;; ("SPC" . company-complete-selection)
    ;; ("<tab>" . company-complete-selection)

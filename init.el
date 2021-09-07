@@ -849,8 +849,15 @@
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
                        :fork (:host github
                                     :repo "flatwhatson/pdf-tools"))
+  ;; :general
+  ;; (:keymaps 'pdf-view-mode-map
+  ;;           :states '(normal visual)
+  ;;           "j" (lambda () (interactive) (pdf-view-next-line-or-next-page 2))
+  ;;           "k" (lambda () (interactive) (pdf-view-previous-line-or-previous-page 2))
+  ;;           )
   :init
-  (setq pdf-view-use-scaling t)
+  (setq pdf-view-use-scaling t
+        pdf-view-use-imagemagick nil)
   :config
   (custom-set-variables
    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
@@ -1359,6 +1366,7 @@
   (dired-mode . hide-mode-line-mode))
 
 (use-package shell-pop
+  :disabled
   :custom
   ;; (shell-pop-shell-type '("vterm" "vterm" (lambda nil (vterm))))
   (shell-pop-shell-type '("eshell" "*eshell*" (lambda nil (eshell))))
@@ -2355,3 +2363,68 @@ Asks Finder for the path using AppleScript via `osascript', so
               "f"  'xwwp-ace-toggle)
   :init
   (require 'xwwp-full))
+
+(use-package popper
+  :bind (("s-p"   . popper-toggle-latest)
+         ("s-P"   . popper-cycle)
+         ("s-C-p" . popper-toggle-type))
+  :init
+  (setq popper-reference-buffers
+        '("^\\*Messages\\*"
+          "[Oo]utput\\*"
+          "^\\*Compile-Log\\*"
+          "^\\*Backtrace\\*"
+          "^Calc:"
+          "^\\*ielm\\*"
+          "^\\*Completions\\*"
+          "^\\*Async Shekk Command\\*"
+          "^\\*Shell Command Output\\*"
+          "^\\*TeX Help\\*"
+          "^\\*Apropos"
+          "^\\*evil-registers\\*"
+          eshell-mode
+          helpful-mode
+          help-mode
+          compilation-mode))
+  (defun my/popper-select-popup-at-bottom (buffer &optional _alist)
+    "Display and switch to popup-buffer BUFFER at the bottom of the screen."
+    (let ((window (display-buffer-in-side-window
+                   buffer
+                   '((window-height . (lambda (win)
+                                        (fit-window-to-buffer
+                                         win
+                                         (floor (frame-height) 3)
+                                         (floor (frame-height) 3))))
+                     (side . bottom)
+                     (slot . 1)))))
+      (select-window window)))
+  (setq popper-mode-line nil)
+  (setq popper-group-function #'popper-group-by-directory)
+  ;; (setq popper-group-function #'popper-group-by-project)
+  (setq popper-display-function #'my/popper-select-popup-at-bottom)
+  (popper-mode +1))
+
+(use-package symex
+  :disabled
+  :config
+  (symex-initialize))
+
+(use-package web-noter
+  :straight (:type git :host github :repo "BeneathCloud/web-noter-mode"))
+
+(use-package streak
+  :straight (:type git :host github :repo "fosskers/streak")
+  :config
+  (streak-mode))
+
+(use-package pdf-continuous-scroll-mode
+  ;; :disabled
+  :straight (:type git :host github :repo "dalanicolai/pdf-continuous-scroll-mode.el")
+  :hook
+  (pdf-view-mode . pdf-continuous-scroll-mode))
+
+(use-package toc-mode)
+
+(use-package gnuplot)
+
+(use-package gnuplot-mode)

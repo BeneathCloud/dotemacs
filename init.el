@@ -72,7 +72,7 @@
   :after nano-theme
   :custom
   (face-font-family-alternatives
-   '(("Monospace" "pragmatapro mono liga" "courier" "fixed")
+   '(("Monospace" "Fantasque Sans Mono" "pragmatapro mono liga" "courier" "fixed")
      ("Consolas" "Monaco" "Roboto Mono" "PT Mono" "Terminus" "Monospace")
      ("Monospace Serif" "CMU Typewriter Text" "Courier 10 Pitch" "Monospace")
      ("Serif" "CMU Serif" "Georgia" "Cambria" "Times New Roman" "DejaVu Serif" "serif")
@@ -263,6 +263,7 @@
   ;;:disabled
   :after evil
   :config
+  (setq evil-collection-company-use-tng nil)
   (evil-collection-init))
 
 (use-package evil-commentary
@@ -414,7 +415,7 @@
 
   (general-define-key
    :states '(insert emacs)
-   :keymaps 'global
+   :keymaps '(text-mode-map fundamental-mode-map prog-mode-map org-mode-map)
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
@@ -428,13 +429,15 @@
    "<tab>" 'markdown-cycle)
 
   (general-define-key
-   :state '(insert emacs)
+   :states '(insert emacs)
    :keymaps 'vterm-mode-map
    "C-u" 'vterm-send-C-u)
+
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'xwidget-webkit-mode-map
    "s-c" 'xwidget-webkit-copy-selection-as-kill)
+
   (general-define-key
    :states '(normal visual insert emacs)
    :keymaps 'override
@@ -442,7 +445,7 @@
 
   (general-define-key
    :states '(normal visual)
-   :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map eshell-mode-map vterm-mode-map)
+   :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map  vterm-mode-map nov-mode-map)
    "`" 'beacon-blink
    "f" 'avy-goto-word-0
    "F" 'avy-goto-char-2
@@ -642,6 +645,9 @@
 (use-package company
   ;; :disabled t
   :hook ((prog-mode) . company-mode)
+  ;; :custom-face
+  ;;   (eshell-ls-directory ((t (:inherit nano-strong :extend t))))
+
   :bind
   (:map
    company-active-map
@@ -656,12 +662,13 @@
    ;; ("<tab>" . company-indent-or-complete-common)
    )
   :custom
-  (company-auto-complete t)
+  (company-auto-commit t)
+  (company-auto-commit-chars '(?. ?)))
   (company-minimum-prefix-length 1)
   (company-tooltip-align-annotations t)
   (company-require-match 'never)
   ;; Don't use company in the following modes
-  (company-global-modes '(not magit-mode magit-popup-mode shell-mode org-mode dired-mode))
+  (company-global-modes '(not magit-mode magit-popup-mode shell-mode org-mode dired-mode eshell-mode))
   ;; Trigger completion immediately.
   (company-idle-delay 0.1)
   ;; Number the candidates (use M-1, M-2 etc to select completions).
@@ -670,6 +677,10 @@
   ;; (unless clangd-p (delete 'company-clang company-backends))
   (global-company-mode 1)
   ;; (add-to-list 'company-backends 'company-yasnippet)
+  (with-eval-after-load 'company
+    (define-key company-active-map (kbd "<return>") nil)
+    (define-key company-active-map (kbd "RET") nil)
+    )
   )
 
 (use-package vterm
@@ -846,6 +857,7 @@
 ;;; up, just do 'brew uninstall pdf-tools', wipe out the elpa
 ;;; pdf-tools package and reinstall both as at the start.
 (use-package pdf-tools
+  :defer t
   :straight (pdf-tools :type git :host github :repo "politza/pdf-tools"
                        :fork (:host github
                                     :repo "flatwhatson/pdf-tools"))
@@ -862,7 +874,8 @@
   (custom-set-variables
    '(pdf-tools-handle-upgrades nil)) ; Use brew upgrade pdf-tools instead.
   (setq pdf-info-epdfinfo-program "/usr/local/bin/epdfinfo")
-  (pdf-tools-install))
+  (pdf-tools-install)
+  )
 
 (use-package org-noter)
 
@@ -921,28 +934,19 @@
         deft-use-filename-as-title t))
 
 (use-package eshell
+  :demand
   :custom-face
   ;; (eshell-prompt ((t (:inherit nano-subtle :extend t))))
   (eshell-ls-directory ((t (:inherit nano-strong :extend t))))
   (eshell-ls-backup ((t (:inherit nano-faded :extend t))))
   :init
-  ;; (defun set-eshell-prompt-path ()
-  ;;   (interactive)
-  ;;   (let* ((pwd (eshell/pwd))
-  ;;          (splited (split-string pwd "/"))
-  ;;          (prefix (string-join (seq-take splited 3) "/"))
-  ;;          (rest (string-join (seq-drop splited 3) "/"))
-  ;;          (home (getenv "HOME")))
-  ;;     (if (equal home prefix)
-  ;;         (if (equal home pwd) "~" (concat "~/" rest))
-  ;;       pwd)))
-  (setq eshell-prompt-function
-        (lambda nil
-          (concat
-           "\n"
-           (propertize (eshell/pwd) 'face `(:inherit nano-faded))
-           "\nε ")))
-  (setq eshell-prompt-regexp "^ε ")
+  ;; (setq eshell-prompt-function
+  ;;       (lambda nil
+  ;;         (concat
+  ;;          "\n"
+  ;;          (propertize (eshell/pwd) 'face `(:inherit nano-faded))
+  ;;          "\nε ")))
+  ;; (setq eshell-prompt-regexp "^ε ")
   (defun eshell-other-window ()
     "Open a `shell' in a new window."
     (interactive)
@@ -951,13 +955,23 @@
       (switch-to-buffer-other-window buf)))
   :hook
   (eshell-mode . (lambda ()
-                   (evil-define-key 'insert eshell-mode-map
-                     (kbd "C-u") 'eshell-kill-input
-                     (kbd "C-a") 'eshell-bol
-                     (kbd "C-p") 'eshell-previous-input
-                     (kbd "<up>") 'eshell-previous-input
-                     (kbd "C-n") 'eshell-next-input
-                     (kbd "<down>" 'eshell-next-input)))))
+                   (general-define-key
+                    :keymaps 'eshell-mode-map
+                    :states '(insert emacs)
+                    "C-u" 'eshell-kill-input
+                    "C-a" 'eshell-bol
+                    "C-p" 'eshell-previous-input
+                    "C-n" 'eshell-next-input)
+                    (general-define-key
+                    :states '(normal visual)
+                    :keymaps 'eshell-mode-map
+                    "`" 'beacon-blink
+                    "f" 'avy-goto-word-0
+                    "F" 'avy-goto-char-2
+                    "C-f" 'evil-avy-goto-line
+                    "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
+                    "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1)))))
+  )
 
 (use-package restclient)
 
@@ -1284,6 +1298,7 @@
   (setq w3m-command "/opt/homebrew/bin/w3m"))
 
 (use-package tidal
+  :disabled
   :init
   (setq tidal-interpreter "/Users/las/.ghcup/bin/ghci"))
 
@@ -1365,6 +1380,10 @@
                                             (when all-the-icons-dired-mode
                                               (revert-buffer))))
   )
+
+(use-package dired-collapse
+  :hook
+  (dired-mode . dired-collapse-mode))
 
 (use-package hide-mode-line
   :hook
@@ -1609,62 +1628,76 @@
   :init
   (defface svg-tag-default-face
     `((t :foreground "black" :background "white" :box "black"
-         :family "menlo" :weight light :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight light :height 160))
     "Default face" :group nil)
   (defface svg-tag-todo-face
     `((t :foreground "#ffffff" :background "#FFAB91" :box (:line-width 1 :color "#FFAB91" :style nil)
-         :family "menlo" :weight light :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight light :height 160))
     "TODO face" :group nil)
   (defface svg-tag-next-face
     `((t :foreground "white" :background "#673AB7" :box (:line-width 1 :color "#673AB7" :style nil)
-         :family "menlo" :weight light :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight light :height 160))
     "TODO face" :group nil)
   (defface svg-tag-date-active-face
     '((t :foreground "white" :background "#673AB7"
          :box (:line-width 1 :color "#673AB7" :style nil)
-         :family "menlo" :weight regular :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight regular :height 160))
     "Face for active date svg tag" :group nil)
 
   (defface svg-tag-time-active-face
     '((t :foreground "#673AB7" :background "#ffffff"
          :box (:line-width 1 :color "#673AB7" :style nil)
-         :family "menlo" :weight light :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight light :height 160))
     "Face for active time svg tag" :group nil)
 
   (defface svg-tag-date-inactive-face
     '((t :foreground "#ffffff" :background "#B0BEC5"
          :box (:line-width 1 :color "#B0BEC5" :style nil)
-         :family "menlo" :weight regular :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight regular :height 160))
     "Face for inactive date svg tag" :group nil)
 
   (defface svg-tag-time-inactive-face
     '((t :foreground "#B0BEC5" :background "#ffffff"
          :box (:line-width 2 :color "#B0BEC5" :style nil)
-         :family "menlo" :weight light :height 160))
+         ;; :family "menlo"
+         :family "fantasque sans mono"
+         :weight light :height 160))
     "Face for inactive time svg tag" :group nil)
   :config
   (defun svg-tag-default (text)
-    (svg-tag-make (substring text 1 -1) 'svg-tag-default-face 1 1 2))
+    (svg-tag-make (substring text 1 -1) 'svg-tag-default-face 0 1 2))
   (defun svg-tag-priority (text)
-    (svg-tag-make (substring text 2 -1) 'svg-tag-default-face 1 0 2))
+    (svg-tag-make (substring text 2 -1) 'svg-tag-default-face 0 0 2))
   (setq svg-tag-todo
-        (svg-tag-make "TODO" 'svg-tag-todo-face 1 1 2))
+        (svg-tag-make "TODO" 'svg-tag-todo-face 0 1 2))
   (setq svg-tag-next
-        (svg-tag-make "NEXT" 'svg-tag-next-face 1 1 2))
+        (svg-tag-make "NEXT" 'svg-tag-next-face 0 1 2))
 
   (defun svg-tag-make-org-date-active (text)
-  (svg-tag-make (substring text 1 -1) 'svg-tag-date-active-face 1 0 0))
+  (svg-tag-make (substring text 1 -1) 'svg-tag-date-active-face 0 0 0))
   (defun svg-tag-make-org-time-active (text)
-    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 1 0 0))
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 0 0 0))
   (defun svg-tag-make-org-range-active (text)
-    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 1 0 0))
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-active-face 0 0 0))
 
   (defun svg-tag-make-org-date-inactive (text)
-    (svg-tag-make (substring text 1 -1) 'svg-tag-date-inactive-face 1 0 0))
+    (svg-tag-make (substring text 1 -1) 'svg-tag-date-inactive-face 0 0 0))
   (defun svg-tag-make-org-time-inactive (text)
-    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 1 0 0))
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 0 0 0))
   (defun svg-tag-make-org-range-inactive (text)
-    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 1 0 0))
+    (svg-tag-make (substring text 0 -1) 'svg-tag-time-inactive-face 0 0 0))
 
   (defconst date-re "[0-9]\\{4\\}-[0-9]\\{2\\}-[0-9]\\{2\\}")
   (defconst time-re "[0-9]\\{2\\}:[0-9]\\{2\\}")
@@ -1729,8 +1762,8 @@ Asks Finder for the path using AppleScript via `osascript', so
   :hook
   (org-mode . (lambda () (org-superstar-mode 1)))
   :init
-  ;; (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?○))
-  (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?◌))
+  (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?○))
+  ;; (setq org-superstar-headline-bullets-list '(?◉ ?◈ ?◌))
   ;; (setq org-superstar-item-bullet-alist '((?* . ?❖) (?+ . ?▣) (?- . ?•)))
   (setq org-superstar-item-bullet-alist '((?* . ?❖) (?+ . ?▢) (?- . ?•)))
   ;; This is usually the default, but keep in mind it must be nil
@@ -1746,6 +1779,9 @@ Asks Finder for the path using AppleScript via `osascript', so
   :straight (:type git :host nil :url "https://depp.brause.cc/nov.el/")
   :init
   (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode))
+  (setq nov-text-width 80)
+  :hook
+  (nov-mode . olivetti-mode)
   :config
   ;; Fix the Unicode error
   (with-no-warnings
@@ -2376,6 +2412,7 @@ Asks Finder for the path using AppleScript via `osascript', so
   :init
   (setq popper-reference-buffers
         '("^\\*Messages\\*"
+          "^\\*cider"
           "[Oo]utput\\*"
           "^\\*Compile-Log\\*"
           "^\\*Backtrace\\*"
@@ -2435,10 +2472,12 @@ Asks Finder for the path using AppleScript via `osascript', so
 (use-package gnuplot-mode)
 
 (use-package embark
-  :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
+  :general
+  (:keymaps 'override
+            :states '(normal visual emacs insert)
+   "C-."  'embark-act         ;; pick some comfortable binding
    ;; ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+   "C-h B" 'embark-bindings) ;; alternative for `describe-bindings'
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
@@ -2473,3 +2512,10 @@ Asks Finder for the path using AppleScript via `osascript', so
             "." 'dired-hide-dotfiles-mode)
   :hook
   (dired-mode . dired-hide-dotfiles-mode))
+
+(use-package esup
+  :init
+  (setq esup-depth 0))
+
+(use-package esh-autosuggest
+  :hook (eshell-mode . esh-autosuggest-mode))

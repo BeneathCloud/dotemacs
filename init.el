@@ -83,14 +83,14 @@
   :custom-face
   (mode-line ((t (:family "Monospace" :height 150
                           :inherit nano-subtle
-                          ;; :box (:line-width 3 :inherit nano-subtle-i)))))
-                          :box (:line-width 3 :color ,nano-light-subtle)))))
+                          :box (:line-width 3 :color ,nano-light-subtle)
+                          ))))
   (mode-line-inactive ((t (:family "Monospace" :height 150
                           ;; :inherit nano-subtle-i
                            :background ,nano-light-subtle
                            :foreground ,nano-light-faded
-                          ;; :box (:line-width 3 :color ,nano-light-subtle)))))
-                          :box (:line-width 3 :color ,nano-light-subtle)))))
+                           :box (:line-width 3 :color ,nano-light-subtle)
+                           ))))
   (variable-pitch ((t (:family "Variable Serif" :height 200))))
   (fixed-pitch ((t (:family "Monospace" :height 200))))
   (default ((t (:family "Monospace" :height 200))))
@@ -232,6 +232,8 @@
   :config
   (key-chord-mode 1))
 
+(use-package websocket)
+
 (use-package avy
   :after key-chord
   ;; :general
@@ -341,22 +343,25 @@
    :keymaps 'override
    "mm" 'mu4e
    "mu" (lambda () (interactive) (mu4e-headers-search "flag:unread AND NOT flag:trashed"))
-   "nb" 'org-roam-buffer-toggle
-   "nn" 'org-roam-node-find
-   "ni" 'org-roam-node-insert
-   "ng" 'org-roam-graph
-   "nc" 'org-roam-capture 
-   "nj" 'org-roam-dailies-capture-today
-   "ndd" 'org-roam-dailies-goto-today
-   "ndD" 'org-roam-dailies-capture-today
-   "ndy" 'org-roam-dailies-goto-yesterday
-   "ndY" 'org-roam-dailies-capture-yesterday
-   "ndt" 'org-roam-dailies-goto-tomorrow
-   "ndT" 'org-roam-dailies-capture-tomorrow
-   "ndg" 'org-roam-dailies-goto-date
-   "ndG" 'org-roam-dailies-capture-date
-   "ndn" 'org-roam-dailies-goto-next-note
-   "ndp" 'org-roam-dailies-goto-previous-note
+   "nrb" 'org-roam-buffer-toggle
+   "nrn" 'org-roam-node-find
+   "nrr" 'org-roam-node-find
+   "nri" 'org-roam-node-insert
+   "nrg" 'org-roam-graph
+   "nrc" 'org-roam-capture 
+   "nrj" 'org-roam-dailies-capture-today
+   "nrdd" 'org-roam-dailies-goto-today
+   "nrdD" 'org-roam-dailies-capture-today
+   "nrdy" 'org-roam-dailies-goto-yesterday
+   "nrdY" 'org-roam-dailies-capture-yesterday
+   "nrdt" 'org-roam-dailies-goto-tomorrow
+   "nrdT" 'org-roam-dailies-capture-tomorrow
+   "nrdg" 'org-roam-dailies-goto-date
+   "nrdG" 'org-roam-dailies-capture-date
+   "nrdn" 'org-roam-dailies-goto-next-note
+   "nrdp" 'org-roam-dailies-goto-previous-note
+   "nss" (lambda () (interactive) (find-file "~/Space/Notes/snippet/snippet.org"))
+   "npp" (lambda () (interactive) (find-file "~/Space/Notes/PARA/para.org"))
    ";" 'eval-expression
    ;; "e" 'consult-flycheck
    "e" 'elfeed
@@ -448,7 +453,7 @@
    :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map  vterm-mode-map nov-mode-map)
    "`" 'beacon-blink
    "f" 'avy-goto-word-0
-   "F" 'avy-goto-char-2
+   ;; "F" 'avy-goto-char-2
    "C-f" 'evil-avy-goto-line
    "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
    "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1)))
@@ -600,7 +605,10 @@
   :bind
   (:map clojure-mode-map
         ("M-<return>" . cider-eval-last-sexp)
-        ("C-c C-s" . cider-jack-in)))
+        ("C-c C-s" . cider-jack-in))
+  :init
+  (setq org-babel-clojure-backend 'cider)
+  (require 'cider))
 
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
@@ -645,9 +653,9 @@
 (use-package company
   ;; :disabled t
   :hook ((prog-mode) . company-mode)
-  ;; :custom-face
-  ;;   (eshell-ls-directory ((t (:inherit nano-strong :extend t))))
-
+  :custom-face
+  (company-preview-common ((t (:inherit nano-faded :extend t))))
+  (company-preview ((t (:inherit nano-faded :extend t))))
   :bind
   (:map
    company-active-map
@@ -663,7 +671,7 @@
    )
   :custom
   (company-auto-commit t)
-  (company-auto-commit-chars '(?. ?)))
+  (company-auto-commit-chars '(?)))
   (company-minimum-prefix-length 1)
   (company-tooltip-align-annotations t)
   (company-require-match 'never)
@@ -967,7 +975,7 @@
                     :keymaps 'eshell-mode-map
                     "`" 'beacon-blink
                     "f" 'avy-goto-word-0
-                    "F" 'avy-goto-char-2
+                    ;;"F" 'avy-goto-char-2
                     "C-f" 'evil-avy-goto-line
                     "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
                     "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1)))))
@@ -1171,6 +1179,7 @@
      (ditaa . t)
      (dot . t)
      (latex . t)
+     (shell . t)
      (plantuml . t)))
   (add-to-list 'org-export-backends 'md)
   ;; agenda view custom
@@ -1737,7 +1746,7 @@ Asks Finder for the path using AppleScript via `osascript', so
   (let ($applescript $result)
     ;; Script via:  https://brettterpstra.com/2013/02/09/quick-tip-jumping-to-the-finder-location-in-terminal/
     (setq $applescript "tell application \"Finder\" to if (count of Finder windows) > 0 then get POSIX path of (target of front Finder window as text)")
-    (setq $result (ns-do-applescript $applescript))
+    (setq $result (do-applescript $applescript))
     (if $result
         (string-trim $result)
       "")))
@@ -2240,7 +2249,7 @@ Asks Finder for the path using AppleScript via `osascript', so
               elfeed-show-mode-map
               mu4e-view-mode-map)
             :states 'normal
-            "f" 'ace-link))
+            "F" 'ace-link))
 
 (use-package hledger-mode
 :disabled
@@ -2413,6 +2422,8 @@ Asks Finder for the path using AppleScript via `osascript', so
   (setq popper-reference-buffers
         '("^\\*Messages\\*"
           "^\\*cider"
+          "^\\*vterm\\*"
+          "^\\*skewer-repl\\*"
           "[Oo]utput\\*"
           "^\\*Compile-Log\\*"
           "^\\*Backtrace\\*"
@@ -2441,7 +2452,8 @@ Asks Finder for the path using AppleScript via `osascript', so
                      (slot . 1)))))
       (select-window window)))
   (setq popper-mode-line nil)
-  (setq popper-group-function #'popper-group-by-directory)
+  (setq popper-group-function nil)
+  ;; (setq popper-group-function #'popper-group-by-directory)
   ;; (setq popper-group-function #'popper-group-by-project)
   (setq popper-display-function #'my/popper-select-popup-at-bottom)
   (popper-mode +1))
@@ -2455,6 +2467,7 @@ Asks Finder for the path using AppleScript via `osascript', so
   :straight (:type git :host github :repo "BeneathCloud/web-noter-mode"))
 
 (use-package streak
+  :disabled
   :straight (:type git :host github :repo "fosskers/streak")
   :config
   (streak-mode))
@@ -2476,8 +2489,11 @@ Asks Finder for the path using AppleScript via `osascript', so
   (:keymaps 'override
             :states '(normal visual emacs insert)
    "C-."  'embark-act         ;; pick some comfortable binding
-   ;; ("C-;" . embark-dwim)        ;; good alternative: M-.
+   ;; ("C-;" . embark-M-.)        ;; good alternative: M-.
    "C-h B" 'embark-bindings) ;; alternative for `describe-bindings'
+  :bind
+  (("C-." . embark-act)         ;; pick some comfortable binding
+   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
   :init
   ;; Optionally replace the key help with a completing-read interface
   (setq prefix-help-command #'embark-prefix-help-command)
@@ -2519,3 +2535,38 @@ Asks Finder for the path using AppleScript via `osascript', so
 
 (use-package esh-autosuggest
   :hook (eshell-mode . esh-autosuggest-mode))
+
+(use-package eshell-info-banner
+  :disabled
+  :defer t
+  :straight (eshell-info-banner :type git
+                                :host github
+                                :repo "phundrak/eshell-info-banner.el")
+  :hook (eshell-banner-load . eshell-info-banner-update-banner))
+
+(use-package eshell-syntax-highlighting
+  :after esh-mode
+  :config
+  ;; Enable in all Eshell buffers.
+  (eshell-syntax-highlighting-global-mode +1))
+
+(use-package org-kanban
+:disabled)
+
+(use-package org-autolist
+  :hook
+  (org-mode . org-autolist-mode))
+
+(use-package lister
+  :straight (:type git :host github :repo "publicimageltd/lister"))
+
+(use-package js2-mode
+  :init
+  (setq js2-strict-missing-semi-warning nil)
+  (setq js2-missing-semi-one-line-override t))
+
+(use-package skewer-mode
+  :config
+  (add-hook 'js2-mode-hook 'skewer-mode)
+  (add-hook 'css-mode-hook 'skewer-css-mode)
+  (add-hook 'html-mode-hook 'skewer-html-mode))

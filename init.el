@@ -18,6 +18,9 @@
 (setq straight-use-package-by-default t)
 
 ;; -----------------------------------------------------
+
+(when (fboundp 'electric-indent-mode) (electric-indent-mode -1))
+
 (use-package nano-theme
   :straight (nano-theme :type git :host github
                         :repo "rougier/nano-theme")
@@ -81,19 +84,21 @@
   (trash-directory "~/.Trash")
   (frame-resize-pixelwise t)
   :custom-face
-  (mode-line ((t (:family "Monospace" :height 150
+  (mode-line ((t (:family "Monospace" :height 120
+  ;; (mode-line ((t (:family "Monospace" :height 150
                           :inherit nano-subtle
                           :box (:line-width 3 :color ,nano-light-subtle)
                           ))))
-  (mode-line-inactive ((t (:family "Monospace" :height 150
+  (mode-line-inactive ((t (:family "Monospace" :height 120
+  ;; (mode-line-inactive ((t (:family "Monospace" :height 150
                           ;; :inherit nano-subtle-i
                            :background ,nano-light-subtle
                            :foreground ,nano-light-faded
                            :box (:line-width 3 :color ,nano-light-subtle)
                            ))))
-  (variable-pitch ((t (:family "Variable Serif" :height 200))))
-  (fixed-pitch ((t (:family "Monospace" :height 200))))
-  (default ((t (:family "Monospace" :height 200))))
+  (variable-pitch ((t (:family "Variable Serif" :height 160))))
+  (fixed-pitch ((t (:family "Monospace" :height 160))))
+  (default ((t (:family "Monospace" :height 160))))
   :init
   ;; emacs-mac no-title-bar patch
   (setq mac-use-title-bar t)
@@ -1435,10 +1440,11 @@
                        profiler-report-mode
                        speedbar-mode
                        gud-mode
+                       prog-mode
                        calc-mode
                        Info-mode)))))
   :hook
-  (prog-mode . wucuo-start)
+  ;; (prog-mode . wucuo-start)
   (text-mode . wucuo-start)
   )
 
@@ -1544,7 +1550,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "Monospace" :height 200))))
+ '(default ((t (:family "Monospace" :height 160))))
  '(bookmark-face ((t (:inherit nano-subtle))))
  '(corfu-background ((t (:inherit nil :background "white"))))
  '(corfu-border ((t (:inherit nil :background "#D8DEE9"))))
@@ -1814,6 +1820,7 @@ Asks Finder for the path using AppleScript via `osascript', so
          ("C-x C-j" . consult-dir-jump-file)))
 
 (use-package mu4e
+  :disabled
   :ensure nil
   :defer t
   :load-path "/opt/homebrew/Cellar/mu/1.6.3/share/emacs/site-lisp/mu/mu4e"
@@ -2226,12 +2233,14 @@ Asks Finder for the path using AppleScript via `osascript', so
 ;;       (kill-buffer "*launcher*"))))
 
 (use-package elfeed-org
+  :disabled
   :init
   (setq rmh-elfeed-org-files (list "~/Space/Notes/Org Roam/elfeed.org"))
   :config
   (elfeed-org))
 
 (use-package elfeed
+  :disabled
   :hook
   (elfeed-show-mode . (lambda ()
                         (turn-on-olivetti-mode)
@@ -2304,6 +2313,7 @@ Asks Finder for the path using AppleScript via `osascript', so
         ("S-<return>" . hkey-either)))
 
 (use-package slack
+  :disabled
   :demand
   :commands (slack-start)
   :init
@@ -2485,6 +2495,7 @@ Asks Finder for the path using AppleScript via `osascript', so
 (use-package gnuplot-mode)
 
 (use-package embark
+  :disabled
   :general
   (:keymaps 'override
             :states '(normal visual emacs insert)
@@ -2570,3 +2581,5 @@ Asks Finder for the path using AppleScript via `osascript', so
   (add-hook 'js2-mode-hook 'skewer-mode)
   (add-hook 'css-mode-hook 'skewer-css-mode)
   (add-hook 'html-mode-hook 'skewer-html-mode))
+
+(use-package elm-mode)

@@ -1,8 +1,18 @@
-;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;;; Emacs Bookmark Format Version 1 ;;;; -*- coding: utf-8-emacs -*-
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("emacs [elfeed]"
+(("原宿牛仔：日本街头时尚五十年 by 【美】W.大卫·马克斯, 吴纬疆 (z-lib.org).epub<6AB730-35FB-45AC-8FE0-3B7C25869E02>"
+ (filename . "/Users/las/Space/Notes/PARA/data/7A/6AB730-35FB-45AC-8FE0-3B7C25869E02/原宿牛仔：日本街头时尚五十年 by 【美】W.大卫·马克斯, 吴纬疆 (z-lib.org).epub")
+ (index . 3)
+ (position . 798)
+ (handler . nov-bookmark-jump-handler))
+("ranger-m"
+ (filename . "~/.config/emacs/")
+ (front-context-string . "emojis/\n  drwx--")
+ (rear-context-string . " 96 09-01 19:24 ")
+ (position . 290))
+("emacs [elfeed]"
  (location . "@6-months-ago +emacs +unread")
  (tags "unread" "emacs")
  (handler . elfeed-search-bookmark-handler))

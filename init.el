@@ -190,6 +190,7 @@
   (require 'cl)
   ;; emacs server
   ;; (server-start)
+  (save-place-mode 1)
   (global-visual-line-mode)
   (delete-selection-mode nil)
   (setq tab-always-indent 'complete))

@@ -1,6 +1,8 @@
 ;-*- lexical-binding: t -*-
-;;;;; My Emacs Config 
-;;;;; lasviceju@gmail.com
+ ;;;;; My Emacs Config 
+ ;;;;; lasviceju@gmail.com
+
+ ;;;; Core
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -16,32 +18,104 @@
  ;; If there is more than one, they won't work right.
  )
 
-;;;; Core
+ ;;; straght.el
+ (defvar bootstrap-version)
+ (setq straight-disable-native-compile t)
+ (let ((bootstrap-file
+        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+       (bootstrap-version 5))
+   (unless (file-exists-p bootstrap-file)
+     (with-current-buffer
+         (url-retrieve-synchronously
+          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+          'silent 'inhibit-cookies)
+       (goto-char (point-max))
+       (eval-print-last-sexp)))
+   (load bootstrap-file nil 'nomessage))
+ (straight-use-package 'use-package)
+ (setq straight-use-package-by-default t)
 
-;;; straght.el
-(defvar bootstrap-version)
-(setq straight-disable-native-compile t)
-(let ((bootstrap-file
-       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-      (bootstrap-version 5))
-  (unless (file-exists-p bootstrap-file)
-    (with-current-buffer
-        (url-retrieve-synchronously
-         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-         'silent 'inhibit-cookies)
-      (goto-char (point-max))
-      (eval-print-last-sexp)))
-  (load bootstrap-file nil 'nomessage))
-(straight-use-package 'use-package)
-(setq straight-use-package-by-default t)
+ (use-package el-patch
+   :init
+   (setq el-patch-enable-use-package-integration t))
 
-(use-package el-patch
-  :init
-  (setq el-patch-enable-use-package-integration t))
+ (use-package dash)
 
-(use-package dash)
+ (use-package s)
 
-(use-package s)
+(use-package exwm
+  :disabled
+  :config
+  (defun my/exwm-config-example ()
+    (require 'exwm-randr)
+    (exwm-randr-enable)
+    (start-process-shell-command "xrandr" nil "xrandr --output HDMI-1 --primary --mode 3840x2160 --pos 0x0 --rotate normal")
+    (set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+
+    ;; Set the initial workspace number.
+    (setq exwm-workspace-number 4)
+    ;; Make class name the buffer name
+    (add-hook 'exwm-update-class-hook
+              (lambda ()
+                (exwm-workspace-rename-buffer exwm-class-name)))
+    ;; Global keybindings.
+    (setq exwm-input-global-keys
+          `(
+            ;; 's-r': Reset (to line-mode).
+            ([?\s-r] . exwm-reset)
+            ;; 's-w': Switch workspace.
+            ;; ([?\s-w] . exwm-workspace-switch)
+            ;; 's-&': Launch application.
+            ([?\s-&] . (lambda (command)
+                         (interactive (list (read-shell-command "$ ")))
+                         (start-process-shell-command command nil command)))
+            ;; 's-N': Switch to certain workspace.
+            ,@(mapcar (lambda (i)
+                        `(,(kbd (format "s-%d" i)) .
+                          (lambda ()
+                            (interactive)
+                            (exwm-workspace-switch-create ,i))))
+                      (number-sequence 0 9))
+            (,(kbd "s-o") . delete-other-windows)
+            (,(kbd "s-w") . delete-window)
+            ([s-left] . windmove-left)
+            ([s-right] . windmove-right)
+            ([s-up] . windmove-up)
+            ([s-down] . windmove-down)
+            ([?\s-m] . maximize-window)
+            ([?\s-M] . winner-undo)
+            ([?\s-j] . other-window)
+            ([?\s-k] . (lambda () (interactive) (other-window -1)))
+            (,(kbd "s-<return>") . (lambda () (interactive)(split-window-horizontally) (other-window 1)))
+            (,(kbd "s-S-<return>") . (lambda () (interactive)(split-window-vertically) (other-window 1)))
+            ([?\s-t] . eshell-other-window)
+            (,(kbd "s-}") . winner-redo)
+            (,(kbd "s-[") . previous-buffer)
+            (,(kbd "s-]") . next-buffer)
+            (,(kbd "s-{") . winner-undo)))
+
+    (setq exwm-input-simulation-keys
+          '(([?\C-b] . [left])
+            ([?\C-f] . [right])
+            ([?\C-p] . [up])
+            ([?\C-n] . [down])
+            ([?\C-a] . [home])
+            ([?\C-e] . [end])
+            ([?\M-v] . [prior])
+            ([?\C-v] . [next])
+            ([?\C-d] . [delete])
+            ([?\C-k] . [S-end delete])))
+    (setq exwm-input-prefix-keys
+          '(?\C-x
+            ?\C-u
+            ?\C-h
+            ?\M-x
+            ?\M-`
+            ?\M-:
+            ?\C-\M-j ; Buffer list
+            ?\M-\ )) ; Meta+SPC
+    (exwm-enable))
+  (my/exwm-config-example))
 
 (use-package emacs
   :init
@@ -65,21 +139,35 @@
   (setq font-lock-maximum-decoration nil)
   (setq font-lock-maximum-size nil)
   (setq auto-fill-mode nil)
-  (setq fill-column 80)
+  (setq frame-resize-pixelwise t) ; fix crash on stumpwm gaps
+  ;; (setq fill-column 80)
   (if (fboundp 'scroll-bar-mode)
       (scroll-bar-mode -1))
   (if (fboundp 'tool-bar-mode)
       (tool-bar-mode nil))
   (setq default-frame-alist
         (append (list
-                 '(min-height . 1)  '(height . 45)
-                 '(min-width  . 1)  '(width  . 81)
+                 ;; '(min-height . 1)  '(height . 45)
+                 ;; '(min-width  . 1)  '(width  . 81)
+                 '(fullcreen . maximized)
                  '(vertical-scroll-bars . nil)
                  '(internal-border-width . 24)
                  '(left-fringe . 0)
                  '(right-fringe . 0)
                  '(tool-bar-lines . 0)
                  '(menu-bar-lines . 0))))
+  ;; transparency
+  (add-to-list 'default-frame-alist '(alpha . (97 . 97)))
+  (set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+  ;; font
+  (add-to-list 'default-frame-alist '(font . "Fira Code-12"))
+  (custom-theme-set-faces
+   'user
+   '(variable-pitch ((t (:family "Fira Code" :height 120))))
+   '(fixed-pitch ((t ( :family "Fira Code" :height 120)))))
+
+
   (setq-default cursor-type '(hbar .  2))
   (setq-default cursor-in-non-selected-windows nil)
   (setq blink-cursor-mode nil)
@@ -101,17 +189,17 @@
   :config
   (require 'cl)
   ;; emacs server
-  (server-start)
+  ;; (server-start)
   (global-visual-line-mode)
   (delete-selection-mode nil)
   (setq tab-always-indent 'complete))
 
-(when (member "Fira Code" (font-family-list))
-  (set-frame-font "Fira Code-12" t t))
+  ;; (when (member "Fira Code" (font-family-list))
+  ;;   (set-frame-font "Fira Code-12" t t))
 
 (use-package atom-one-dark-theme
   :config
-  ;; (load-theme 'atom-one-dark t)
+  (load-theme 'atom-one-dark t)
   )
 
 (use-package gruvbox-theme)
@@ -127,7 +215,7 @@
   (modus-themes-load-themes)
   :config
   ;; Load the theme of your choice:
-  (modus-themes-load-operandi) ;; OR (modus-themes-load-vivendi)
+  ;; (modus-themes-load-operandi) ;; OR (modus-themes-load-vivendi)
   )
 
 (use-package twilight-bright-theme)
@@ -150,7 +238,17 @@
   (setq evil-undo-system 'undo-fu)
   (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
+  (setq evil-want-C-u-delete t)
+  ;; Don't move cursor backward when exiting insert mode
+  (setq evil-move-cursor-back nil)
+  (setq evil-move-beyond-eol t)
+  ;; Don't replace kill ring when pasting
+  (setq evil-kill-on-visual-paste nil)
+  ;; Enable most emacs keybindings in insert state
+  ;; (setq evil-disable-insert-state-bindings t)
   :config
+  ;; (evil-set-initial-state 'exwm-mode 'insert)
   (evil-mode))
 
 (use-package evil-collection
@@ -170,27 +268,32 @@
 (use-package general
   :config
   (general-define-key
-   :keymaps 'evil-insert-state-map
+   ;; :keymaps 'evil-insert-state-map
+   :states '(insert)
+   ;; :keymaps 'override
    (general-chord "jk") 'evil-normal-state
    (general-chord "kj") 'evil-normal-state)
+
   (general-define-key
-   :states '(normal visual insert emacs)
-   :keymaps 'override
+   :states '(normal visual insert emacs motion)
+   ;; :keymaps 'override
    "M-i" 'evil-force-normal-state
    "M-m" 'maximize-window
    "M-j" 'other-window
    "M-J" (lambda () (interactive) (other-window -1))
-   "C-<return>" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-   "C-S-<return>" (lambda () (interactive)(split-window-vertically) (other-window 1))
-   "C-t" 'eshell-other-window
-   "M-[" 'winner-undo
-   "M-]" 'winner-redo
+   "M-<return>" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+   "M-S-<return>" (lambda () (interactive)(split-window-vertically) (other-window 1))
+   "M-t" 'eshell-other-window
+   "M-[" 'previous-buffer
+   "M-]" 'next-buffer
+   "M-{" 'winner-undo
+   "M-}" 'winner-redo
    "M-o" 'delete-other-windows
    "M-w" 'delete-window
    "M-W" 'kill-current-buffer
-   "C-+" 'text-scale-increase
-   "C-_" 'text-scale-decrease
-   "C-)" 'text-scale-mode
+   "M-+" 'text-scale-increase
+   "M-_" 'text-scale-decrease
+   "M-)" 'text-scale-mode
    "C-S-v" 'yank
    "<f5>" 'my/change-theme
    "<f6>" 'org-babel-tangle
@@ -203,9 +306,14 @@
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
+   ;; :states '(normal visual motion)
+   ;; :prefix "SPC"
+   ;; :non-normal-prefix "M-SPC"
+   :keymaps '(normal insert emacs motion)
    :prefix "SPC"
-   :states '(normal visual)
-   :keymaps 'override
+   ;; :non-normal-prefix "M-SPC"
+   :global-prefix "M-SPC"
+   ;; :keymaps 'override
 
    "" '(nil :which-key "keymapping")
    "SPC" 'consult-buffer
@@ -385,6 +493,10 @@
 (use-package alloy-mode
   :straight (:host github :repo "dwwmmn/alloy-mode")
   :mode "\\.als\\'")
+
+(use-package slime
+  :init
+  (setq inferior-lisp-program "sbcl"))
 
 (defun my/put-file-name-on-clipboard ()
     "Put the current file name on the clipboard"

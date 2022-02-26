@@ -1,47 +1,33 @@
 ;-*- lexical-binding: t -*-
- ;;;;; My Emacs Config 
- ;;;;; lasviceju@gmail.com
+;;;;; My Emacs Config 
+;;;;; lasviceju@gmail.com
 
- ;;;; Core
+;;;; Core
 
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("c74e83f8aa4c78a121b52146eadb792c9facc5b1f02c917e3dbb454fca931223" default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+;;; straght.el
+(defvar bootstrap-version)
+(setq straight-disable-native-compile t)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 5))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+(straight-use-package 'use-package)
+(setq straight-use-package-by-default t)
 
- ;;; straght.el
- (defvar bootstrap-version)
- (setq straight-disable-native-compile t)
- (let ((bootstrap-file
-        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-       (bootstrap-version 5))
-   (unless (file-exists-p bootstrap-file)
-     (with-current-buffer
-         (url-retrieve-synchronously
-          "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-          'silent 'inhibit-cookies)
-       (goto-char (point-max))
-       (eval-print-last-sexp)))
-   (load bootstrap-file nil 'nomessage))
- (straight-use-package 'use-package)
- (setq straight-use-package-by-default t)
+(use-package el-patch
+  :init
+  (setq el-patch-enable-use-package-integration t))
 
- (use-package el-patch
-   :init
-   (setq el-patch-enable-use-package-integration t))
+(use-package dash)
 
- (use-package dash)
-
- (use-package s)
+(use-package s)
 
 (use-package exwm
   :disabled
@@ -117,6 +103,182 @@
     (exwm-enable))
   (my/exwm-config-example))
 
+(use-package key-chord
+  :config
+  (key-chord-mode 1))
+
+(use-package undo-fu)
+
+(use-package evil
+  :init
+  (setq evil-undo-system 'undo-redo)
+  (setq evil-want-keybinding nil)
+  (setq evil-want-C-u-scroll t)
+  (setq evil-want-C-d-scroll t)
+  (setq evil-want-C-u-delete t)
+  ;; Don't move cursor backward when exiting insert mode
+  (setq evil-move-cursor-back nil)
+  (setq evil-move-beyond-eol t)
+  ;; Don't replace kill ring when pasting
+  (setq evil-kill-on-visual-paste nil)
+  ;; Enable most emacs keybindings in insert state
+  (setq evil-disable-insert-state-bindings t)
+  :config
+  ;; (evil-set-initial-state 'exwm-mode 'insert)
+  (evil-mode))
+
+(use-package evil-collection
+  :after evil
+  :config
+  (setq evil-collection-company-use-tng nil)
+  (evil-collection-init))
+
+(use-package evil-commentary
+  :config
+  (evil-commentary-mode))
+
+(use-package evil-surround
+  :config
+  (global-evil-surround-mode 1))
+
+(use-package general
+  :config
+  (general-define-key
+   ;; :keymaps 'evil-insert-state-map
+   :states '(insert)
+   :keymaps 'override
+   (general-chord "jk") 'evil-normal-state
+   (general-chord "kj") 'evil-normal-state)
+
+  (general-define-key
+   :states '(normal visual insert emacs motion)
+   ;; :keymaps 'override
+   "M-i" 'evil-force-normal-state
+   "M-m" 'maximize-window
+   "M-j" 'other-window
+   "M-k" (lambda () (interactive) (other-window -1))
+   ;; "M-<return>" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+   ;; "M-S-<return>" (lambda () (interactive)(split-window-vertically) (other-window 1))
+   "M-h" (lambda () (interactive)(split-window-horizontally) (other-window 1))
+   "M-H" (lambda () (interactive)(split-window-vertically) (other-window 1))
+   "M-t" 'eshell-other-window
+   "M--" 'previous-buffer
+   "M-=" 'next-buffer
+   "M-_" 'eyebrowse-next-window-config
+   "M-+" 'eyebrowse-prev-window-config
+   "M-o" 'delete-other-windows
+   "M-w" 'delete-window
+   "M-W" 'kill-current-buffer
+   "C-+" 'text-scale-increase
+   "C-_" 'text-scale-decrease
+   "M-)" 'text-scale-mode
+   "C-S-v" 'yank
+   "<f5>" 'my/change-theme
+   "<f6>" 'org-babel-tangle
+   "C-S-j" 'join-line
+   "C-j" 'default-indent-new-line)
+
+  (general-define-key
+   :keymaps 'minibuffer-local-map
+   "C-V" 'yank
+   "C-u" (lambda () (interactive) (kill-line 0)))
+
+  (general-define-key
+   ;; :states '(normal visual motion)
+   ;; :prefix "SPC"
+   ;; :non-normal-prefix "M-SPC"
+   :keymaps '(normal insert emacs motion)
+   :prefix "SPC"
+   ;; :non-normal-prefix "M-SPC"
+   :global-prefix "M-SPC"
+   ;; :keymaps 'override
+
+   "" '(nil :which-key "keymapping")
+   "SPC" 'consult-buffer
+   ";" 'eval-expression
+   "g" 'magit
+   "`" (lambda () (interactive) (switch-to-buffer (other-buffer (current-buffer) 1)))
+   "x" (lambda () (interactive) (switch-to-buffer (get-buffer-create "*scratch*"))
+         (electric-indent-local-mode -1))
+
+   "s" '(:ignore t :which-key "search")
+   "ss" 'consult-line
+   "si" 'consult-imenu
+   "sr" 'iedit-mode
+
+   "f" '(:ignore t :which-key "file")
+   "ff" 'find-file
+   "fs" 'save-buffer
+   "fd" 'dired
+   "fD" (lambda () (interactive) (shell-command "open ."))
+
+   "o" '(:ignore t :which-key "open")
+   "ot" 'vterm-other-window  
+
+   "i" '(:ignore t :wk "input")
+   "ii" 'unicode-math-input
+   "iu" 'insert-char
+
+   "b" '(:ignore t :wk "buffer")
+   "bd" 'kill-current-buffer
+
+   "b" '(:ignore t :wk "window")
+   "wd" 'delete-window
+   "ww" 'other-window
+   "wu" 'winner-undo
+   "wr" 'winner-redo
+
+   "t" '(:ignore t :which-key "toggle")
+   "to" 'olivetti-mode)
+
+  ;; for other
+  (general-define-key
+   :states '(normal visual insert emacs)
+   :keymaps 'global
+   "C-a" 'beginning-of-visual-line
+   "C-e" 'end-of-visual-line
+   ;; "C-k" 'kill-line
+   "C-S-u" 'universal-argument
+   "C-n" 'next-line
+   "C-p" 'previous-line
+   )
+
+  (general-define-key
+   :states '(insert)
+   :keymaps '(lispy-mode-map)
+   "M-(" 'lispy-wrap-round
+   "M-[" 'lispy-wrap-brackets
+   "M-{" 'lispy-wrap-braces)
+
+  (general-define-key
+   :states '(insert emacs)
+   :keymaps '(text-mode-map fundamental-mode-map prog-mode-map org-mode-map)
+   "C-u" (lambda () (interactive) (kill-line 0)))
+
+  (general-define-key
+   :state '(insert emacs)
+   :keymaps 'vterm-mode-map
+   "C-u" 'vterm-send-C-u)
+
+  (general-define-key
+   :state '(normal)
+   :keymaps 'markdown-mode-map
+   "<tab>" 'markdown-cycle)
+
+  (general-define-key
+   :state '(normal insert)
+   :keymaps 'emacs-lisp-mode-map
+   "M-<return>" 'eval-last-sexp)
+
+  (general-define-key
+   :states '(normal visual)
+   :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map  vterm-mode-map nov-mode-map)
+   "`" 'beacon-blink
+   "f" 'avy-goto-word-1
+   "F" 'evil-avy-goto-line
+   "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
+   "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1))))
+
 (use-package emacs
   :init
   (setq delete-by-moving-to-trash t)
@@ -185,7 +347,10 @@
           mac-command-modifier 'super
           mac-option-key-is-meta t))
   (setq ring-bell-function 'ignore)
-
+  (setq tab-always-indent 'complete)
+  ;;; Change the custom code location
+  (setq custom-file (locate-user-emacs-file "custom-vars.el"))
+  (load custom-file 'noerror 'nomessage)
   :config
   (require 'cl)
   ;; emacs server
@@ -193,7 +358,9 @@
   (save-place-mode 1)
   (global-visual-line-mode)
   (delete-selection-mode nil)
-  (setq tab-always-indent 'complete))
+  (setq global-auto-revert-non-file-buffers t) ; auto revert for e.g. Dired buffers
+  (global-auto-revert-mode 1) ; auto revert for files
+  )
 
   ;; (when (member "Fira Code" (font-family-list))
   ;;   (set-frame-font "Fira Code-12" t t))
@@ -227,168 +394,6 @@
   :config
   (setq sml/theme 'respectful)
   (sml/setup))
-
-(use-package key-chord
-  :config
-  (key-chord-mode 1))
-
-(use-package undo-fu)
-
-(use-package evil
-  :init
-  (setq evil-undo-system 'undo-fu)
-  (setq evil-want-keybinding nil)
-  (setq evil-want-C-u-scroll t)
-  (setq evil-want-C-d-scroll t)
-  (setq evil-want-C-u-delete t)
-  ;; Don't move cursor backward when exiting insert mode
-  (setq evil-move-cursor-back nil)
-  (setq evil-move-beyond-eol t)
-  ;; Don't replace kill ring when pasting
-  (setq evil-kill-on-visual-paste nil)
-  ;; Enable most emacs keybindings in insert state
-  ;; (setq evil-disable-insert-state-bindings t)
-  :config
-  ;; (evil-set-initial-state 'exwm-mode 'insert)
-  (evil-mode))
-
-(use-package evil-collection
-  :after evil
-  :config
-  (setq evil-collection-company-use-tng nil)
-  (evil-collection-init))
-
-(use-package evil-commentary
-  :config
-  (evil-commentary-mode))
-
-(use-package evil-surround
-  :config
-  (global-evil-surround-mode 1))
-
-(use-package general
-  :config
-  (general-define-key
-   ;; :keymaps 'evil-insert-state-map
-   :states '(insert)
-   ;; :keymaps 'override
-   (general-chord "jk") 'evil-normal-state
-   (general-chord "kj") 'evil-normal-state)
-
-  (general-define-key
-   :states '(normal visual insert emacs motion)
-   ;; :keymaps 'override
-   "M-i" 'evil-force-normal-state
-   "M-m" 'maximize-window
-   "M-j" 'other-window
-   "M-J" (lambda () (interactive) (other-window -1))
-   "M-<return>" (lambda () (interactive)(split-window-horizontally) (other-window 1))
-   "M-S-<return>" (lambda () (interactive)(split-window-vertically) (other-window 1))
-   "M-t" 'eshell-other-window
-   "M-[" 'previous-buffer
-   "M-]" 'next-buffer
-   "M-{" 'winner-undo
-   "M-}" 'winner-redo
-   "M-o" 'delete-other-windows
-   "M-w" 'delete-window
-   "M-W" 'kill-current-buffer
-   "M-+" 'text-scale-increase
-   "M-_" 'text-scale-decrease
-   "M-)" 'text-scale-mode
-   "C-S-v" 'yank
-   "<f5>" 'my/change-theme
-   "<f6>" 'org-babel-tangle
-   "C-S-j" 'join-line
-   "C-j" 'default-indent-new-line)
-
-  (general-define-key
-   :keymaps 'minibuffer-local-map
-   "C-V" 'yank
-   "C-u" (lambda () (interactive) (kill-line 0)))
-
-  (general-define-key
-   ;; :states '(normal visual motion)
-   ;; :prefix "SPC"
-   ;; :non-normal-prefix "M-SPC"
-   :keymaps '(normal insert emacs motion)
-   :prefix "SPC"
-   ;; :non-normal-prefix "M-SPC"
-   :global-prefix "M-SPC"
-   ;; :keymaps 'override
-
-   "" '(nil :which-key "keymapping")
-   "SPC" 'consult-buffer
-   ";" 'eval-expression
-   "g" 'magit
-   "`" (lambda () (interactive) (switch-to-buffer (other-buffer (current-buffer) 1)))
-
-   "s" '(:ignore t :which-key "search")
-   "ss" 'consult-line
-   "si" 'consult-imenu
-   "sr" 'iedit-mode
-
-   "f" '(:ignore t :which-key "file")
-   "ff" 'find-file
-   "fs" 'save-buffer
-   "fd" 'dired
-   "fD" (lambda () (interactive) (shell-command "open ."))
-
-   "o" '(:ignore t :which-key "open")
-   "ot" 'vterm-other-window  
-
-   "i" '(:ignore t :wk "input")
-   "ii" 'unicode-math-input
-   "iu" 'insert-char
-
-   "b" '(:ignore t :wk "buffer")
-   "bd" 'kill-current-buffer
-
-   "b" '(:ignore t :wk "window")
-   "wd" 'delete-window
-   "ww" 'other-window
-
-   "t" '(:ignore t :which-key "toggle")
-   "to" 'olivetti-mode)
-
-  ;; for other
-  (general-define-key
-   :states '(normal visual insert emacs)
-   :keymaps 'global
-   "C-a" 'beginning-of-visual-line
-   "C-e" 'end-of-visual-line
-   "C-k" 'kill-line
-   "C-S-u" 'universal-argument
-   )
-
-  (general-define-key
-   :states '(insert normal emacs visual)
-   :keymaps '(lispy-mode-map emacs-lisp-mode-map)
-   "M-<return>" 'eval-last-sexp
-   "M-S-<return>" 'eval-defun)
-
-  (general-define-key
-   :states '(insert emacs)
-   :keymaps '(text-mode-map fundamental-mode-map prog-mode-map org-mode-map)
-   "C-u" (lambda () (interactive) (kill-line 0)))
-
-  (general-define-key
-   :state '(insert emacs)
-   :keymaps 'vterm-mode-map
-   "C-u" 'vterm-send-C-u)
-
-  (general-define-key
-   :state '(normal)
-   :keymaps 'markdown-mode-map
-   "<tab>" 'markdown-cycle)
-
-  (general-define-key
-   :states '(normal visual)
-   :keymaps '(prog-mode-map text-mode-map fundamental-mode-map org-mode-map  vterm-mode-map nov-mode-map)
-   "`" 'beacon-blink
-   "f" 'avy-goto-word-1
-   "F" 'evil-avy-goto-line
-   "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
-   "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1))))
 
 (use-package yaml-mode
   :mode ("\\.yaml\\'" "\\.yml\\'"))
@@ -449,6 +454,12 @@
 
 (use-package cider
   :after org
+  :hook
+  (cider-mode . (lambda ()
+                  (make-local-variable 'completion-styles)
+                  (setq completion-styles '(basic
+                                            partial-completion
+                                            emacs22))))
   :bind
   (:map clojure-mode-map
         ("M-<return>" . cider-eval-last-sexp)
@@ -655,6 +666,7 @@
             (lambda () (bound-and-true-p org-tree-slide-mode))))
 
 (use-package eyebrowse
+  :disabled
   :demand t
   :custom
   (eyebrowse-wrap-around t)
@@ -986,7 +998,10 @@
         ("TAB" . corfu-next)
         ([tab] . corfu-next)
         ("S-TAB" . corfu-previous)
-        ([backtab] . corfu-previous))
+        ([backtab] . corfu-previous)
+        ;; ("TAB" . corfu-insert)
+        ;; ([tab] . corfu-insert)
+        )
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
   ;; (corfu-auto t)                 ;; Enable auto completion
@@ -1084,3 +1099,32 @@
   ;; Enables ligature checks globally in all buffers. You can also do it
   ;; per mode with `ligature-mode'.
   (global-ligature-mode t))
+
+(use-package persistent-scratch
+  :config
+  (persistent-scratch-setup-default))
+
+(use-package lispy
+  :disabled
+  :hook
+  ((emacs-lisp-mode . lispy-mode)
+   (clojure-mode . lispy-mode)
+   (lisp-mode . lispy-mode))
+  :init
+  (setq lispy-compat '(edebbug cider magit-blame-mode)))
+
+(use-package paredit
+  ;; :bind
+  ;; (("C-k" . paredit-kill)) 
+  :hook
+  ((emacs-lisp-mode . paredit-mode)
+   (clojure-mode . paredit-mode)
+   (clojurescript-mode . paredit-mode)
+   (lisp-mode . paredit-mode)))
+
+;; (use-package undo-tree
+;;   :after evil
+;;   :hook
+;;   ((evil-local-mode . (lambda () (turn-on-undo-tree-mode))))
+;;   :config
+;;   (global-undo-tree-mode))

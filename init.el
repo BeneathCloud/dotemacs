@@ -111,7 +111,7 @@
 
 (use-package evil
   :init
-  (setq evil-undo-system 'undo-redo)
+  (setq evil-undo-system 'undo-fu)
   (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-d-scroll t)
@@ -191,7 +191,7 @@
    :prefix "SPC"
    ;; :non-normal-prefix "M-SPC"
    :global-prefix "M-SPC"
-   ;; :keymaps 'override
+   :keymaps 'override
 
    "" '(nil :which-key "keymapping")
    "SPC" 'consult-buffer
@@ -214,6 +214,7 @@
 
    "o" '(:ignore t :which-key "open")
    "ot" 'vterm-other-window  
+   "oe" 'eshell-other-window
 
    "i" '(:ignore t :wk "input")
    "ii" 'unicode-math-input
@@ -228,6 +229,25 @@
    "wu" 'winner-undo
    "wr" 'winner-redo
 
+   "p" '(:ignore t :wk "project")
+   "p!" 'project-shell-command
+   "p&" 'project-async-shell-command
+   "pD" 'project-dired
+   "pF" 'project-or-external-find-file
+   "pG" 'project-or-external-find-regexp
+   "pb" 'project-switch-to-buffer
+   "pc" 'project-compile
+   "pd" 'project-find-dir
+   "pe" 'project-eshell
+   "pf" 'project-find-file
+   "pg" 'project-find-regexp
+   "pk" 'project-kill-buffers
+   "pp" 'project-switch-project
+   "pr" 'project-query-replace-regexp
+   "ps" 'project-shell
+   "pv" 'project-vc-dir
+   "px" 'project-execute-extended-command
+
    "t" '(:ignore t :which-key "toggle")
    "to" 'olivetti-mode)
 
@@ -241,6 +261,7 @@
    "C-S-u" 'universal-argument
    "C-n" 'next-line
    "C-p" 'previous-line
+   "C-o" 'open-line
    )
 
   (general-define-key
@@ -393,6 +414,7 @@
 (use-package smart-mode-line
   :config
   (setq sml/theme 'respectful)
+  (setq sml/mode-width 'right)
   (sml/setup))
 
 (use-package yaml-mode
@@ -469,6 +491,7 @@
   (require 'cider))
 
 (use-package lsp-mode
+  :disabled
   :custom
   (lsp-headerline-breadcrumb-enable nil)
   :hook
@@ -477,6 +500,7 @@
    (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
+  :disabled
   :init
   (setq lsp-ui-doc-enable nil)
   ;; (setq lsp-ui-show-hover t)
@@ -486,13 +510,46 @@
 
 (use-package lsp-java)
 
+(use-package eglot)
+
 (use-package swift-mode)
 
 (use-package sml-mode)
 
 (use-package haskell-mode
+  :demand t
+  ;; :bind
+  ;; (:map haskell-interactive-mode-map
+  ;;       ("C-a" . haskell-interactive-mode-beginning)
+  ;;       ("C-e" . haskell-interactive-mode-end))
+  :hook
+  ((haskell-mode . interactive-haskell-mode))
+  :init
+  (require 'haskell-mode-autoloads)
   :config
-  (electric-pair-local-mode -1))
+ ;; (add-hook 'haskell-mode-hook 'interactive-haskell-mode)
+  (defun haskell-evil-open-above ()
+    (interactive)
+    ;; (evil-digit-argument-or-evil-beginning-of-line)
+    ;; (evil-beginning-of-line)
+    (evil-previous-line)
+    (haskell-indentation-newline-and-indent)
+    ;; (haskell-indentation-indent-line)
+    (evil-append-line nil))
+
+  (defun haskell-evil-open-below ()
+    (interactive)
+    (evil-append-line nil)
+    (haskell-indentation-newline-and-indent))
+
+  (evil-define-key 'normal haskell-mode-map "o" 'haskell-evil-open-below
+    "O" 'haskell-evil-open-above))
+
+(use-package hindent
+  :demand t
+  :straight (:build (:not compile))
+  :hook
+  ((haskell-mode . hindent-mode)))
 
 (use-package lsp-haskell)
 
@@ -937,9 +994,9 @@
 (use-package sicp)
 
 (use-package popper
-  :bind (("s-p"   . popper-toggle-latest)
-         ("s-P"   . popper-cycle)
-         ("s-C-p" . popper-toggle-type))
+  :bind (("M-u"   . popper-toggle-latest)
+         ("M-U"   . popper-cycle)
+         ("M-C-U" . popper-toggle-type))
   :init
   (setq popper-reference-buffers
         '("^\\*Messages\\*"
@@ -960,7 +1017,8 @@
           eshell-mode
           helpful-mode
           help-mode
-          compilation-mode))
+          compilation-mode
+          interactive-haskell-mode))
   (defun my/popper-select-popup-at-bottom (buffer &optional _alist)
     "Display and switch to popup-buffer BUFFER at the bottom of the screen."
     (let ((window (display-buffer-in-side-window
@@ -974,11 +1032,13 @@
                      (slot . 1)))))
       (select-window window)))
   (setq popper-mode-line nil)
-  (setq popper-group-function nil)
+  (setq popper-group-function #'popper-group-by-project)
   ;; (setq popper-group-function #'popper-group-by-directory)
   ;; (setq popper-group-function #'popper-group-by-project)
   (setq popper-display-function #'my/popper-select-popup-at-bottom)
-  (popper-mode +1))
+  (popper-mode +1)
+  ;; (popper-echo-mode +1)
+)
 
 (use-package fold-this)
 
@@ -993,6 +1053,7 @@
   (embark-collect-mode . consult-preview-at-point-mode))
 
 (use-package corfu
+  :disabled
   :bind
   (:map corfu-map
         ("TAB" . corfu-next)
@@ -1026,6 +1087,8 @@
   (corfu-global-mode))
 
 (use-package cape
+  :disabled
+  :ensure t
   ;; Bind dedicated completion commands
   :bind (("C-c p p" . completion-at-point) ;; capf
          ("C-c p t" . complete-tag)        ;; etags
@@ -1058,6 +1121,17 @@
   ;;(add-to-list 'completion-at-point-functions #'cape-line)
   )
 
+(use-package company
+  :straight (:build (:not compile))
+  :config
+  (setq company-backends (append '((company-capf company-dabbrev-code))
+
+                              company-backends))
+  :hook
+  ((emacs-lisp-mode . company-mode)
+   (clojure-mode . company-mode)
+   (interactive-haskell-mode . company-mode)))
+
 (use-package which-key
   :config
   (which-key-mode))
@@ -1075,6 +1149,7 @@
 (use-package unicode-math-input)
 
 (use-package ligature
+  :disabled
   :straight (:host github :repo "mickeynp/ligature.el")
   :config
   ;; Enable the "www" ligature in every possible major mode
@@ -1114,17 +1189,24 @@
   (setq lispy-compat '(edebbug cider magit-blame-mode)))
 
 (use-package paredit
-  ;; :bind
-  ;; (("C-k" . paredit-kill)) 
+  :bind
+  (("M-[" . 'paredit-wrap-square)
+   ("M-{" . 'paredit-wrap-curly)) 
   :hook
   ((emacs-lisp-mode . paredit-mode)
    (clojure-mode . paredit-mode)
    (clojurescript-mode . paredit-mode)
    (lisp-mode . paredit-mode)))
 
-;; (use-package undo-tree
-;;   :after evil
-;;   :hook
-;;   ((evil-local-mode . (lambda () (turn-on-undo-tree-mode))))
-;;   :config
-;;   (global-undo-tree-mode))
+(use-package evil-goggles
+  :ensure t
+  :config
+  (evil-goggles-mode)
+
+  ;; optionally use diff-mode's faces; as a result, deleted text
+  ;; will be highlighed with `diff-removed` face which is typically
+  ;; some red color (as defined by the color theme)
+  ;; other faces such as `diff-added` will be used for other actions
+  (evil-goggles-use-diff-faces))
+
+(use-package tldr)

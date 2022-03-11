@@ -131,7 +131,7 @@
     (setq evil-want-C-d-scroll t)
     (setq evil-want-C-u-delete t)
     ;; Don't move cursor backward when exiting insert mode
-    (setq evil-move-cursor-back nil)
+    ;; (setq evil-move-cursor-back nil)
     (setq evil-move-beyond-eol t)
     ;; Don't replace kill ring when pasting
     (setq evil-kill-on-visual-paste nil)
@@ -507,6 +507,9 @@
     :bind
     (:map clojure-mode-map
           ("M-<return>" . cider-eval-last-sexp)
+          ("M-S-<return>" . cider-pprint-eval-last-sexp-to-comment)
+          ("C-<return>" . cider-eval-defun-at-point)
+          ("C-M-<return>" . cider-eval-sexp-up-to-point)
           ("C-c C-s" . cider-jack-in))
     :init
     (setq org-babel-clojure-backend 'cider)
@@ -1160,7 +1163,7 @@
     :hook
     ((emacs-lisp-mode . company-mode)
      (clojure-mode . company-mode)
-     (interactive-haskell-mode . company-mode)))
+     (haskell-interactive-mode . company-mode)))
 
   (use-package which-key
     :config
@@ -1240,4 +1243,6 @@
     (evil-goggles-use-diff-faces))
 
   (use-package tldr)
+
+  (use-package alda-mode)
 #+end_src

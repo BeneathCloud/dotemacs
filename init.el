@@ -111,7 +111,8 @@
 
 (use-package evil
   :init
-  (setq evil-undo-system 'undo-fu)
+  ;;(setq evil-undo-system 'undo-fu)
+  (setq evil-undo-system 'undo-redo)
   (setq evil-want-keybinding nil)
   (setq evil-want-C-u-scroll t)
   (setq evil-want-C-d-scroll t)
@@ -152,7 +153,7 @@
 
   (general-define-key
    :states '(normal visual insert emacs motion)
-   ;; :keymaps 'override
+   :keymaps '(global override)
    "M-i" 'evil-force-normal-state
    "M-m" 'maximize-window
    "M-j" 'other-window
@@ -200,6 +201,7 @@
    "`" (lambda () (interactive) (switch-to-buffer (other-buffer (current-buffer) 1)))
    "x" (lambda () (interactive) (switch-to-buffer (get-buffer-create "*scratch*"))
          (electric-indent-local-mode -1))
+   "X" (lambda () (interactive) (find-file "~/Space/areas/code-journal/2022-03.clj"))
 
    "s" '(:ignore t :which-key "search")
    "ss" 'consult-line
@@ -322,6 +324,7 @@
   (setq font-lock-maximum-decoration nil)
   (setq font-lock-maximum-size nil)
   (setq auto-fill-mode nil)
+  (setq frame-title-format "%b")
   (setq frame-resize-pixelwise t) ; fix crash on stumpwm gaps
   ;; (setq fill-column 80)
   (if (fboundp 'scroll-bar-mode)
@@ -478,6 +481,7 @@
   :after org
   :hook
   (cider-mode . (lambda ()
+                  (add-hook 'before-save-hook 'cider-format-buffer t t)
                   (make-local-variable 'completion-styles)
                   (setq completion-styles '(basic
                                             partial-completion
@@ -488,10 +492,31 @@
         ("M-S-<return>" . cider-pprint-eval-last-sexp-to-comment)
         ("C-<return>" . cider-eval-defun-at-point)
         ("C-M-<return>" . cider-eval-sexp-up-to-point)
-        ("C-c C-s" . cider-jack-in))
+        ("C-c C-s" . cider-jack-in)
+        :map paredit-mode-map
+        ("M-q" . cider-format-defun))
   :init
   (setq org-babel-clojure-backend 'cider)
   (require 'cider))
+
+(use-package clj-refactor
+  :config
+  (defun my-clojure-mode-hook ()
+    (clj-refactor-mode 1)
+    (yas-minor-mode 1) ; for adding require/use/import statements
+    ;; This choice of keybinding leaves cider-macroexpand-1 unbound
+    (cljr-add-keybindings-with-prefix "C-c C-m"))
+  (add-hook 'clojure-mode-hook #'my-clojure-mode-hook))
+
+;;; require clj-kondo clo tool to be installed
+(use-package flycheck-clj-kondo)
+
+(use-package clojure-mode
+  :config
+  (require 'flycheck-clj-kondo))
+
+(use-package zprint-mode
+  :disabled)
 
 (use-package lsp-mode
   :disabled
@@ -569,56 +594,6 @@
 (use-package slime
   :init
   (setq inferior-lisp-program "sbcl"))
-
-(defun my/put-file-name-on-clipboard ()
-    "Put the current file name on the clipboard"
-    (interactive)
-    (let ((filename (if (equal major-mode 'dired-mode)
-                        default-directory
-                      (buffer-file-name))))
-      (when filename
-        (with-temp-buffer
-          (insert filename)
-          (clipboard-kill-region (point-min) (point-max)))
-        (message filename))))
-
-(defun my/delete-current-file ()
-  (interactive)
-  (let ((filename (buffer-file-name)))
-    (if filename
-        (when (y-or-n-p (concat "Delete file " filename "?"))
-            (progn
-              (delete-file filename t)
-              (message "%s deleted" filename)
-              (kill-buffer)
-              (when (> (length (window-list)) 1)
-                (delete-window))))
-      (message "It's not a file."))))
-
-(defun my/rename-current-file ()
-  "rename current file name"
-  (interactive)
-  (let ((name (buffer-name))
-        (file-name (buffer-file-name)))
-    (if file-name
-        (let ((new-name (read-from-minibuffer
-                         (concat "New name for: ")
-                         file-name)))
-          (if (get-buffer new-name)
-              (message "A buffer named %s already exists." new-name)
-            (progn
-              (rename-file file-name new-name)
-              (set-visited-file-name new-name)
-              (set-buffer-modified-p nil))))
-      (message "This buffer is not visiting a file."))))
-
-(defun my/change-theme ()
-  (interactive)
-  (let ((theme (completing-read "Select a theme: "
-                                custom-known-themes)))
-    (dolist (theme custom-enabled-themes)
-      (disable-theme theme))
-    (load-theme (intern theme) t)))
 
 (use-package avy
   :after key-chord
@@ -821,7 +796,9 @@
         ("C-c C-c" . (lambda ()
                      (interactive)
                      (org-ctrl-c-ctrl-c)
-                     (org-display-inline-images))))
+                     (org-display-inline-images)))
+        ("M-j" . other-window)
+        ("M-k" . (lambda () (interactive) (other-window -1))))
   :init
   (setq org-pretty-entities t)
   (setq org-image-actual-width nil)
@@ -1152,7 +1129,6 @@
 (use-package unicode-math-input)
 
 (use-package ligature
-  :disabled
   :straight (:host github :repo "mickeynp/ligature.el")
   :config
   ;; Enable the "www" ligature in every possible major mode
@@ -1177,6 +1153,11 @@
   ;; Enables ligature checks globally in all buffers. You can also do it
   ;; per mode with `ligature-mode'.
   (global-ligature-mode t))
+
+(use-package emacs
+  :hook
+  (clojure-mode . prettify-symbol-mode)
+  (emacs-lisp-mode . prettify-symbol-mode))
 
 (use-package persistent-scratch
   :config
@@ -1215,3 +1196,53 @@
 (use-package tldr)
 
 (use-package alda-mode)
+
+(defun my/put-file-name-on-clipboard ()
+    "Put the current file name on the clipboard"
+    (interactive)
+    (let ((filename (if (equal major-mode 'dired-mode)
+                        default-directory
+                      (buffer-file-name))))
+      (when filename
+        (with-temp-buffer
+          (insert filename)
+          (clipboard-kill-region (point-min) (point-max)))
+        (message filename))))
+
+(defun my/delete-current-file ()
+  (interactive)
+  (let ((filename (buffer-file-name)))
+    (if filename
+        (when (y-or-n-p (concat "Delete file " filename "?"))
+            (progn
+              (delete-file filename t)
+              (message "%s deleted" filename)
+              (kill-buffer)
+              (when (> (length (window-list)) 1)
+                (delete-window))))
+      (message "It's not a file."))))
+
+(defun my/rename-current-file ()
+  "rename current file name"
+  (interactive)
+  (let ((name (buffer-name))
+        (file-name (buffer-file-name)))
+    (if file-name
+        (let ((new-name (read-from-minibuffer
+                         (concat "New name for: ")
+                         file-name)))
+          (if (get-buffer new-name)
+              (message "A buffer named %s already exists." new-name)
+            (progn
+              (rename-file file-name new-name)
+              (set-visited-file-name new-name)
+              (set-buffer-modified-p nil))))
+      (message "This buffer is not visiting a file."))))
+
+(defun my/change-theme ()
+  (interactive)
+  (let ((theme (completing-read "Select a theme: "
+                                custom-known-themes)))
+    (dolist (theme custom-enabled-themes)
+      (disable-theme theme))
+    (load-theme (intern theme) t)))

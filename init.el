@@ -185,10 +185,16 @@
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
+   :states '(normal visual motion)
+   :keymaps 'rustic-mode-map
+   :prefix "SPC"
+   "mr" 'rustic-cargo-run)
+
+  (general-define-key
    ;; :states '(normal visual motion)
    ;; :prefix "SPC"
    ;; :non-normal-prefix "M-SPC"
-   :keymaps '(normal insert emacs motion)
+   :states '(normal insert emacs motion)
    :prefix "SPC"
    ;; :non-normal-prefix "M-SPC"
    :global-prefix "M-SPC"
@@ -261,8 +267,8 @@
    "C-e" 'end-of-visual-line
    ;; "C-k" 'kill-line
    "C-S-u" 'universal-argument
-   "C-n" 'next-line
-   "C-p" 'previous-line
+   ;; "C-n" 'next-line
+   ;; "C-p" 'previous-line
    "C-o" 'open-line
    )
 
@@ -279,9 +285,11 @@
    "C-u" (lambda () (interactive) (kill-line 0)))
 
   (general-define-key
-   :state '(insert emacs)
+   :state '(insert normal emacs)
    :keymaps 'vterm-mode-map
-   "C-u" 'vterm-send-C-u)
+   "C-u" 'vterm-send-C-u
+   "C-n" 'vterm-send-C-n
+   "C-p" 'vterm-send-C-p)
 
   (general-define-key
    :state '(normal)
@@ -326,6 +334,7 @@
   (setq auto-fill-mode nil)
   (setq frame-title-format "%b")
   (setq frame-resize-pixelwise t) ; fix crash on stumpwm gaps
+  (setq compilation-ask-about-save nil)
   ;; (setq fill-column 80)
   (if (fboundp 'scroll-bar-mode)
       (scroll-bar-mode -1))
@@ -519,7 +528,7 @@
   :disabled)
 
 (use-package lsp-mode
-  :disabled
+  ;; :disabled
   :custom
   (lsp-headerline-breadcrumb-enable nil)
   :hook
@@ -528,7 +537,7 @@
    (lsp-mode . lsp-enable-which-key-integration)))
 
 (use-package lsp-ui
-  :disabled
+  ;; :disabled
   :init
   (setq lsp-ui-doc-enable nil)
   ;; (setq lsp-ui-show-hover t)
@@ -594,6 +603,14 @@
 (use-package slime
   :init
   (setq inferior-lisp-program "sbcl"))
+
+(use-package rustic
+  :config
+  (setq rustic-format-on-save t))
+
+(use-package yasnippet
+  :config
+  (add-hook 'prog-mode-hook 'yas-minor-mode))
 
 (use-package avy
   :after key-chord

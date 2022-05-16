@@ -199,10 +199,16 @@
      "C-u" (lambda () (interactive) (kill-line 0)))
 
     (general-define-key
+     :states '(normal visual motion)
+     :keymaps 'rustic-mode-map
+     :prefix "SPC"
+     "mr" 'rustic-cargo-run)
+
+    (general-define-key
      ;; :states '(normal visual motion)
      ;; :prefix "SPC"
      ;; :non-normal-prefix "M-SPC"
-     :keymaps '(normal insert emacs motion)
+     :states '(normal insert emacs motion)
      :prefix "SPC"
      ;; :non-normal-prefix "M-SPC"
      :global-prefix "M-SPC"
@@ -275,8 +281,8 @@
      "C-e" 'end-of-visual-line
      ;; "C-k" 'kill-line
      "C-S-u" 'universal-argument
-     "C-n" 'next-line
-     "C-p" 'previous-line
+     ;; "C-n" 'next-line
+     ;; "C-p" 'previous-line
      "C-o" 'open-line
      )
 
@@ -293,9 +299,11 @@
      "C-u" (lambda () (interactive) (kill-line 0)))
 
     (general-define-key
-     :state '(insert emacs)
+     :state '(insert normal emacs)
      :keymaps 'vterm-mode-map
-     "C-u" 'vterm-send-C-u)
+     "C-u" 'vterm-send-C-u
+     "C-n" 'vterm-send-C-n
+     "C-p" 'vterm-send-C-p)
 
     (general-define-key
      :state '(normal)
@@ -344,6 +352,7 @@
     (setq auto-fill-mode nil)
     (setq frame-title-format "%b")
     (setq frame-resize-pixelwise t) ; fix crash on stumpwm gaps
+    (setq compilation-ask-about-save nil)
     ;; (setq fill-column 80)
     (if (fboundp 'scroll-bar-mode)
         (scroll-bar-mode -1))
@@ -541,7 +550,7 @@
     :disabled)
 
   (use-package lsp-mode
-    :disabled
+    ;; :disabled
     :custom
     (lsp-headerline-breadcrumb-enable nil)
     :hook
@@ -550,7 +559,7 @@
      (lsp-mode . lsp-enable-which-key-integration)))
 
   (use-package lsp-ui
-    :disabled
+    ;; :disabled
     :init
     (setq lsp-ui-doc-enable nil)
     ;; (setq lsp-ui-show-hover t)
@@ -616,612 +625,620 @@
   (use-package slime
     :init
     (setq inferior-lisp-program "sbcl"))
+
+  (use-package rustic
+    :config
+    (setq rustic-format-on-save t))
+
+  (use-package yasnippet
+    :config
+    (add-hook 'prog-mode-hook 'yas-minor-mode))
 #+end_src
 
 * Functionality
 
 #+begin_src emacs-lisp
-  (use-package avy
-    :after key-chord
-    :config
-    (avy-setup-default))
+    (use-package avy
+      :after key-chord
+      :config
+      (avy-setup-default))
 
-  (use-package vertico
-    :init
-    (vertico-mode)
-    ;; Different scroll margin
-    ;; (setq vertico-scroll-margin 0)
-    ;; (setq vertico-count 20)
-    ;; Grow and shrink the Vertico minibuffer
-    ;; (setq vertico-resize t)
-    (setq vertico-cycle t)
-    (setq enable-recursive-minibuffers t)
-    (setq read-file-name-completion-ignore-case t
-          read-buffer-completion-ignore-case t
-          completion-ignore-case t)
-    (define-key vertico-map "?" #'minibuffer-completion-help)
-    (define-key vertico-map (kbd "M-TAB") #'minibuffer-complete))
+    (use-package vertico
+      :init
+      (vertico-mode)
+      ;; Different scroll margin
+      ;; (setq vertico-scroll-margin 0)
+      ;; (setq vertico-count 20)
+      ;; Grow and shrink the Vertico minibuffer
+      ;; (setq vertico-resize t)
+      (setq vertico-cycle t)
+      (setq enable-recursive-minibuffers t)
+      (setq read-file-name-completion-ignore-case t
+            read-buffer-completion-ignore-case t
+            completion-ignore-case t)
+      (define-key vertico-map "?" #'minibuffer-completion-help)
+      (define-key vertico-map (kbd "M-TAB") #'minibuffer-complete))
 
-  (use-package orderless
-    :init
-    (setq completion-styles '(orderless)
-          completion-category-defaults nil
-          completion-category-overrides '((file (styles partial-completion)))))
+    (use-package orderless
+      :init
+      (setq completion-styles '(orderless)
+            completion-category-defaults nil
+            completion-category-overrides '((file (styles partial-completion)))))
 
-  (use-package savehist
-    :init
-    (savehist-mode))
+    (use-package savehist
+      :init
+      (savehist-mode))
 
-  (use-package marginalia
-    :init
-    (marginalia-mode))
+    (use-package marginalia
+      :init
+      (marginalia-mode))
 
-  (use-package embark
-    :bind
-    (("C-." . embark-act)         ;; pick some comfortable binding
-     ("C-;" . embark-dwim)        ;; good alternative: M-.
-     ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
-    :init
-    ;; Optionally replace the key help with a completing-read interface
-    (setq prefix-help-command #'embark-prefix-help-command)
-    :config
-    ;; Hide the mode line of the Embark live/completions buffers
-    (add-to-list 'display-buffer-alist
-                 '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
-                   nil
-                   (window-parameters (mode-line-format . none)))))
+    (use-package embark
+      :bind
+      (("C-." . embark-act)         ;; pick some comfortable binding
+       ("C-;" . embark-dwim)        ;; good alternative: M-.
+       ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+      :init
+      ;; Optionally replace the key help with a completing-read interface
+      (setq prefix-help-command #'embark-prefix-help-command)
+      :config
+      ;; Hide the mode line of the Embark live/completions buffers
+      (add-to-list 'display-buffer-alist
+                   '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
+                     nil
+                     (window-parameters (mode-line-format . none)))))
 
-  (use-package recentf
-    :init
-    (defun recentf-open-files+ ()
-      "Use `completing-read' to open a recent file."
-      (interactive)
-      (let ((files (mapcar 'abbreviate-file-name recentf-list)))
-        (find-file (completing-read "Find recent file: " files nil t))))
-    :config
-    (recentf-mode t))
+    (use-package recentf
+      :init
+      (defun recentf-open-files+ ()
+        "Use `completing-read' to open a recent file."
+        (interactive)
+        (let ((files (mapcar 'abbreviate-file-name recentf-list)))
+          (find-file (completing-read "Find recent file: " files nil t))))
+      :config
+      (recentf-mode t))
 
-  (use-package consult
-    :custom
-    (consult-find-command "fd -I -t f ")
-    :init
-    (defun consult-focus-lines-quit ()
-      (interactive)
-      (consult-focus-lines -1))
-    :bind
-    ("M-'" . consult-register-store)
-    :config
-    ;; (setq consult-project-root-function #'projectile-project-root)
-    (setq consult-project-root-function nil)
-    (defun find-fd (&optional dir initial)
-      (interactive "P")
-      (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
-        (consult-find dir initial))))
+    (use-package consult
+      :custom
+      (consult-find-command "fd -I -t f ")
+      :init
+      (defun consult-focus-lines-quit ()
+        (interactive)
+        (consult-focus-lines -1))
+      :bind
+      ("M-'" . consult-register-store)
+      :config
+      ;; (setq consult-project-root-function #'projectile-project-root)
+      (setq consult-project-root-function nil)
+      (defun find-fd (&optional dir initial)
+        (interactive "P")
+        (let ((consult-find-command "fd --color=never --full-path ARG OPTS"))
+          (consult-find dir initial))))
 
-  (use-package olivetti
-    :init
-    ;; (setq olivetti-body-width 80)
-    (setq olivetti-body-width 0.65)
-    (setq olivetti-minimum-body-width 72))
+    (use-package olivetti
+      :init
+      ;; (setq olivetti-body-width 80)
+      (setq olivetti-body-width 0.65)
+      (setq olivetti-minimum-body-width 72))
 
-  (use-package vterm
-    :init
-    ;; (evil-define-key 'insert vterm-mode-map "C-u" 'vterm-send-C-u)
-    (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
-    (setq vterm-kill-buffer-on-exit t))
+    (use-package vterm
+      :init
+      ;; (evil-define-key 'insert vterm-mode-map "C-u" 'vterm-send-C-u)
+      (setq vterm-module-cmake-args "-DUSE_SYSTEM_LIBVTERM=no")
+      (setq vterm-kill-buffer-on-exit t))
 
-  (use-package paren
-    :config
-    (show-paren-mode 1))
+    (use-package paren
+      :config
+      (show-paren-mode 1))
 
-  (use-package magit)
+    (use-package magit)
 
-  (use-package beacon
-    :init
-    (setq beacon-blink-when-window-scrolls nil)
-    :config
-    (beacon-mode 1)
-    (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
-                                                '(vterm-mode shell-mode eshell-mode term-mode elfeed-show-mode)))
-    (add-hook 'beacon-dont-blink-predicates
-              (lambda () (bound-and-true-p org-tree-slide-mode))))
+    (use-package beacon
+      :init
+      (setq beacon-blink-when-window-scrolls nil)
+      :config
+      (beacon-mode 1)
+      (setq beacon-dont-blink-major-modes (append beacon-dont-blink-major-modes
+                                                  '(vterm-mode shell-mode eshell-mode term-mode elfeed-show-mode)))
+      (add-hook 'beacon-dont-blink-predicates
+                (lambda () (bound-and-true-p org-tree-slide-mode))))
 
-  (use-package eyebrowse
-    :disabled
-    :demand t
-    :custom
-    (eyebrowse-wrap-around t)
-    :bind
-    (:map
-     eyebrowse-mode-map
-     ("s-1" . 'eyebrowse-switch-to-window-config-1)
-     ("s-2" . 'eyebrowse-switch-to-window-config-2)
-     ("s-3" . 'eyebrowse-switch-to-window-config-3)
-     ("s-4" . 'eyebrowse-switch-to-window-config-4)
-     ("s-5" . 'eyebrowse-switch-to-window-config-5)
-     ("s-<up>" . 'eyebrowse-close-window-config)
-     ("s-<down>" . 'eyebrowse-rename-window-config)
-     ("s-<left>" . 'eyebrowse-prev-window-config)
-     ("s-<right>" . 'eyebrowse-next-window-config))
-    :hook
-    ((eyebrowse-post-window-switch . get-eyebrowse-status)
-     (eyebrowse-post-window-delete . get-eyebrowse-status))
-    :config
-    (defun get-eyebrowse-status ()
-      (interactive)
-      (message (eyebrowse-mode-line-indicator)))
-    (eyebrowse-mode))
+    (use-package eyebrowse
+      :disabled
+      :demand t
+      :custom
+      (eyebrowse-wrap-around t)
+      :bind
+      (:map
+       eyebrowse-mode-map
+       ("s-1" . 'eyebrowse-switch-to-window-config-1)
+       ("s-2" . 'eyebrowse-switch-to-window-config-2)
+       ("s-3" . 'eyebrowse-switch-to-window-config-3)
+       ("s-4" . 'eyebrowse-switch-to-window-config-4)
+       ("s-5" . 'eyebrowse-switch-to-window-config-5)
+       ("s-<up>" . 'eyebrowse-close-window-config)
+       ("s-<down>" . 'eyebrowse-rename-window-config)
+       ("s-<left>" . 'eyebrowse-prev-window-config)
+       ("s-<right>" . 'eyebrowse-next-window-config))
+      :hook
+      ((eyebrowse-post-window-switch . get-eyebrowse-status)
+       (eyebrowse-post-window-delete . get-eyebrowse-status))
+      :config
+      (defun get-eyebrowse-status ()
+        (interactive)
+        (message (eyebrowse-mode-line-indicator)))
+      (eyebrowse-mode))
 
-  (use-package all-the-icons)
+    (use-package all-the-icons)
 
-  (use-package all-the-icons-dired
-    :hook
-    ((dired-mode . (lambda ()
-                     (interactive)
-                     (unless (file-remote-p default-directory)
-                       (all-the-icons-dired-mode))))
-     (deer-mode . all-the-icons-dired-mode))
-    :config/el-patch
-    (defun all-the-icons-dired--setup ()
-      "Setup `all-the-icons-dired'."
-      (setq-local tab-width (el-patch-swap 1 2))
-      (pcase-dolist (`(,file ,sym ,fn) all-the-icons-dired-advice-alist)
-        (with-eval-after-load file
-          (advice-add sym :around fn)))
-      (all-the-icons-dired--refresh)))
-
-  (use-package expand-region
-    :bind
-    (("C-=" . er/expand-region)
-     ("C--" . er/contract-region)))
-
-
-  (use-package iedit)
-
-  (use-package flycheck
-    :hook
-    ((prog-mode . flycheck-mode)
-     (emacs-lisp-mode . (lambda () (flycheck-mode -1)))))
-
-  (use-package consult-flycheck
-    :bind (:map flycheck-command-map
-                ("!" . consult-flycheck)))
-
-  (use-package eshell
-    :init
-    (defun eshell-other-window ()
-      "Open a `shell' in a new window."
-      (interactive)
-      (let ((buf (eshell)))
-        (switch-to-buffer (other-buffer buf))
-        (switch-to-buffer-other-window buf)))
-    :hook
-    (eshell-mode . (lambda ()
-                     (general-define-key
-                      :keymaps 'eshell-mode-map
-                      :states '(insert emacs)
-                      "C-u" 'eshell-kill-input
-                      "C-a" 'eshell-bol
-                      "C-p" 'eshell-previous-input
-                      "C-n" 'eshell-next-input)
-                      (general-define-key
-                      :states '(normal visual)
-                      :keymaps 'eshell-mode-map
-                      "`" 'beacon-blink
-                      "f" 'avy-goto-word-0
-                      ;;"F" 'avy-goto-char-2
-                      "C-f" 'evil-avy-goto-line
-                      "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
-                      "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1))))))
-
-  (use-package org
-    :hook
-    (org-mode . org-indent-mode)
-    :bind
-    (:map org-mode-map
-          ("C-c C-c" . (lambda ()
+    (use-package all-the-icons-dired
+      :hook
+      ((dired-mode . (lambda ()
                        (interactive)
-                       (org-ctrl-c-ctrl-c)
-                       (org-display-inline-images)))
-          ("M-j" . other-window)
-          ("M-k" . (lambda () (interactive) (other-window -1))))
-    :init
-    (setq org-pretty-entities t)
-    (setq org-image-actual-width nil)
-    (require 'org-tempo) ; enable <s, <e ... abbrev
-    (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
-    (setq org-ellipsis " ⭭ ")
-    (setq org-special-ctrl-a/e nil) ; C-e moves to before the ellipses, not after.
-    (setq org-src-fontify-natively t)
-    (setq org-src-tab-acts-natively t)
-    (setq org-confirm-babel-evaluate nil)
-    (setq org-todo-keywords
-          '((sequence "TODO(t!)" "NEXT(n!)" "|" "DONE(d!)" "HOLD(h!)" "DISCARDED(D!)")))
-    (setq org-log-done 'time)
-    (setq org-log-into-drawer t)
-    (setq org-clock-persist 'history)
-    (org-clock-persistence-insinuate)
-    :config
-    (setq org-format-latex-header
-          "\\documentclass{article}
-          \\usepackage[usenames]{color}
-          [packages]
-          [default-packages]
-          \\pagestyle{empty}             % do not remove
-          % the settings below are copied from fullpage.sty
-          \\setlength{\\textwidth}{\\paperwidth}
-          \\addtolength{\\textwidth}{-3cm}
-          \\setlength{\\oddsidemargin}{1.5cm}
-          \\addtolength{\\oddsidemargin}{-2.54cm}
-          \\setlength{\\evensidemargin}{\\oddsidemargin}
-          \\setlength{\\textheight}{\\paperheight}
-          \\addtolength{\\textheight}{-\\headheight}
-          \\addtolength{\\textheight}{-\\headsep}
-          \\addtolength{\\textheight}{-\\footskip}
-          \\addtolength{\\textheight}{-3cm}
-          \\setlength{\\topmargin}{1.5cm}
-          \\setlength\parindent{0pt}
-          \\addtolength{\\topmargin}{-2.54cm}")
-    (defface org-checkbox-done-text
-      '((t (:inherit 'org-headline-done)))
-      "Face for the text part of a checked org-mode checkbox.")
+                       (unless (file-remote-p default-directory)
+                         (all-the-icons-dired-mode))))
+       (deer-mode . all-the-icons-dired-mode))
+      :config/el-patch
+      (defun all-the-icons-dired--setup ()
+        "Setup `all-the-icons-dired'."
+        (setq-local tab-width (el-patch-swap 1 2))
+        (pcase-dolist (`(,file ,sym ,fn) all-the-icons-dired-advice-alist)
+          (with-eval-after-load file
+            (advice-add sym :around fn)))
+        (all-the-icons-dired--refresh)))
 
-    (font-lock-add-keywords
-     'org-mod
-     `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
-        1 'org-checkbox-done-text prepend))
-     'append)
-    (setq haskell-process-type 'stack-ghci)
-    (org-babel-do-load-languages
-     'org-babel-load-languages
-     '((haskell . t)
-       (ditaa . t)
-       (dot . t)
-       (latex . t)
-       (shell . t)
-       (plantuml . t)))
-    (add-to-list 'org-export-backends 'md)
-    (require 'org-attach)
-    (require 'ob-js)
-    (require 'ob-clojure)
-    (setq org-babel-clojure-backend 'cider)
-    (require 'cider)
-    (require 'ob-scheme)
-    (require 'ob-ruby))
+    (use-package expand-region
+      :bind
+      (("C-=" . er/expand-region)
+       ("C--" . er/contract-region)))
 
-  (use-package evil-org
-    :after org
-    :hook (org-mode . (lambda () evil-org-mode))
-    :config
-    (require 'evil-org-agenda)
-    (evil-org-agenda-set-keys))
 
-  (use-package org-download
-    :after org
-    :hook
-    (dired-mode . org-download-enable)
-    :init
-    (setq org-download-image-org-width 500)
-    ;; (setq-default org-download-image-dir "note_assets")
-    (setq org-download-method 'attach)
-    (setq-default org-download-heading-lvl nil)
-    ;; (setq org-download-method 'directory)
-    (setq org-download-screenshot-method "/usr/sbin/screencapture -i %s"))
+    (use-package iedit)
 
-  (use-package electric
-    :config
-    (electric-pair-mode)
-    :hook
-    (org-mode
-     . (lambda ()
-         (setq-local electric-pair-inhibit-predicate
-                     `(lambda (c)
-                        (if (char-equal c ?<)
-                            t
-                          (,electric-pair-inhibit-predicate c)))))))
+    (use-package flycheck
+      :hook
+      ((prog-mode . flycheck-mode)
+       (emacs-lisp-mode . (lambda () (flycheck-mode -1)))))
 
-  (use-package hide-mode-line
-    :hook
-    (dired-mode . hide-mode-line-mode))
+    (use-package consult-flycheck
+      :bind (:map flycheck-command-map
+                  ("!" . consult-flycheck)))
 
-  (use-package org-tree-slide
-    :init
-    (setq org-tree-slide-heading-emphasis t)
-    :bind
-    (:map org-tree-slide-mode-map
-          ("s-<left>" . org-tree-slide-move-previous-tree)
-          ("s-<right>" . org-tree-slide-move-next-tree)
-          ("s-<up>" . org-tree-slide-content))
-    :hook
-    (org-tree-slide-play . (lambda ()
-                             (make-local-variable 'previous-line-spacing)
-                             (setq previous-line-spacing line-spacing)
-                             (setq line-spacing 1.0)
-                             ;; (setq line-spacing 0)
-                             (org-display-inline-images)
-                             (setq text-scale-mode-amount 3)
-                             (text-scale-mode)
-                             (hide-mode-line-mode)))
-    (org-tree-slide-stop . (lambda ()
-                             (setq line-spacing previous-line-spacing)
-                             (text-scale-mode -1)
-                             (hide-mode-line-mode -1)))
-    :config
-    (org-tree-slide-simple-profile))
+    (use-package eshell
+      :init
+      (defun eshell-other-window ()
+        "Open a `shell' in a new window."
+        (interactive)
+        (let ((buf (eshell)))
+          (switch-to-buffer (other-buffer buf))
+          (switch-to-buffer-other-window buf)))
+      :hook
+      (eshell-mode . (lambda ()
+                       (general-define-key
+                        :keymaps 'eshell-mode-map
+                        :states '(insert emacs)
+                        "C-u" 'eshell-kill-input
+                        "C-a" 'eshell-bol
+                        "C-p" 'eshell-previous-input
+                        "C-n" 'eshell-next-input)
+                        (general-define-key
+                        :states '(normal visual)
+                        :keymaps 'eshell-mode-map
+                        "`" 'beacon-blink
+                        "f" 'avy-goto-word-0
+                        ;;"F" 'avy-goto-char-2
+                        "C-f" 'evil-avy-goto-line
+                        "J" (lambda () (interactive) (scroll-up-command 1) (forward-line 1))
+                        "K" (lambda () (interactive) (scroll-up-command -1) (forward-line -1))))))
 
-  (use-package winner
-    :config
-    (winner-mode +1))
+    (use-package org
+      :hook
+      (org-mode . org-indent-mode)
+      :bind
+      (:map org-mode-map
+            ("C-c C-c" . (lambda ()
+                         (interactive)
+                         (org-ctrl-c-ctrl-c)
+                         (org-display-inline-images)))
+            ("M-j" . other-window)
+            ("M-k" . (lambda () (interactive) (other-window -1))))
+      :init
+      (setq org-pretty-entities t)
+      (setq org-image-actual-width nil)
+      (require 'org-tempo) ; enable <s, <e ... abbrev
+      (add-to-list 'org-structure-template-alist '("el" . "src emacs-lisp"))
+      (setq org-ellipsis " ⭭ ")
+      (setq org-special-ctrl-a/e nil) ; C-e moves to before the ellipses, not after.
+      (setq org-src-fontify-natively t)
+      (setq org-src-tab-acts-natively t)
+      (setq org-confirm-babel-evaluate nil)
+      (setq org-todo-keywords
+            '((sequence "TODO(t!)" "NEXT(n!)" "|" "DONE(d!)" "HOLD(h!)" "DISCARDED(D!)")))
+      (setq org-log-done 'time)
+      (setq org-log-into-drawer t)
+      (setq org-clock-persist 'history)
+      (org-clock-persistence-insinuate)
+      :config
+      (setq org-format-latex-header
+            "\\documentclass{article}
+            \\usepackage[usenames]{color}
+            [packages]
+            [default-packages]
+            \\pagestyle{empty}             % do not remove
+            % the settings below are copied from fullpage.sty
+            \\setlength{\\textwidth}{\\paperwidth}
+            \\addtolength{\\textwidth}{-3cm}
+            \\setlength{\\oddsidemargin}{1.5cm}
+            \\addtolength{\\oddsidemargin}{-2.54cm}
+            \\setlength{\\evensidemargin}{\\oddsidemargin}
+            \\setlength{\\textheight}{\\paperheight}
+            \\addtolength{\\textheight}{-\\headheight}
+            \\addtolength{\\textheight}{-\\headsep}
+            \\addtolength{\\textheight}{-\\footskip}
+            \\addtolength{\\textheight}{-3cm}
+            \\setlength{\\topmargin}{1.5cm}
+            \\setlength\parindent{0pt}
+            \\addtolength{\\topmargin}{-2.54cm}")
+      (defface org-checkbox-done-text
+        '((t (:inherit 'org-headline-done)))
+        "Face for the text part of a checked org-mode checkbox.")
 
-  (use-package consult-dir
-    :straight (:type git :host github :repo "karthink/consult-dir")
-    :bind (("C-x C-d" . consult-dir)
-           ("C-x C-j" . consult-dir-jump-file)))
+      (font-lock-add-keywords
+       'org-mod
+       `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)"
+          1 'org-checkbox-done-text prepend))
+       'append)
+      (setq haskell-process-type 'stack-ghci)
+      (org-babel-do-load-languages
+       'org-babel-load-languages
+       '((haskell . t)
+         (ditaa . t)
+         (dot . t)
+         (latex . t)
+         (shell . t)
+         (plantuml . t)))
+      (add-to-list 'org-export-backends 'md)
+      (require 'org-attach)
+      (require 'ob-js)
+      (require 'ob-clojure)
+      (setq org-babel-clojure-backend 'cider)
+      (require 'cider)
+      (require 'ob-scheme)
+      (require 'ob-ruby))
 
-  ;; Colorize hex code
-  (use-package rainbow-mode
-    :config
-    (rainbow-mode))
+    (use-package evil-org
+      :after org
+      :hook (org-mode . (lambda () evil-org-mode))
+      :config
+      (require 'evil-org-agenda)
+      (evil-org-agenda-set-keys))
 
-  (use-package fireplace)
+    (use-package org-download
+      :after org
+      :hook
+      (dired-mode . org-download-enable)
+      :init
+      (setq org-download-image-org-width 500)
+      ;; (setq-default org-download-image-dir "note_assets")
+      (setq org-download-method 'attach)
+      (setq-default org-download-heading-lvl nil)
+      ;; (setq org-download-method 'directory)
+      (setq org-download-screenshot-method "/usr/sbin/screencapture -i %s"))
 
-  (use-package snow
-    :straight (snow :host github :repo "alphapapa/snow.el"))
+    (use-package electric
+      :config
+      (electric-pair-mode)
+      :hook
+      (org-mode
+       . (lambda ()
+           (setq-local electric-pair-inhibit-predicate
+                       `(lambda (c)
+                          (if (char-equal c ?<)
+                              t
+                            (,electric-pair-inhibit-predicate c)))))))
 
-  (use-package helpful
+    (use-package hide-mode-line
+      :hook
+      (dired-mode . hide-mode-line-mode))
+
+    (use-package org-tree-slide
+      :init
+      (setq org-tree-slide-heading-emphasis t)
+      :bind
+      (:map org-tree-slide-mode-map
+            ("s-<left>" . org-tree-slide-move-previous-tree)
+            ("s-<right>" . org-tree-slide-move-next-tree)
+            ("s-<up>" . org-tree-slide-content))
+      :hook
+      (org-tree-slide-play . (lambda ()
+                               (make-local-variable 'previous-line-spacing)
+                               (setq previous-line-spacing line-spacing)
+                               (setq line-spacing 1.0)
+                               ;; (setq line-spacing 0)
+                               (org-display-inline-images)
+                               (setq text-scale-mode-amount 3)
+                               (text-scale-mode)
+                               (hide-mode-line-mode)))
+      (org-tree-slide-stop . (lambda ()
+                               (setq line-spacing previous-line-spacing)
+                               (text-scale-mode -1)
+                               (hide-mode-line-mode -1)))
+      :config
+      (org-tree-slide-simple-profile))
+
+    (use-package winner
+      :config
+      (winner-mode +1))
+
+    (use-package consult-dir
+      :straight (:type git :host github :repo "karthink/consult-dir")
+      :bind (("C-x C-d" . consult-dir)
+             ("C-x C-j" . consult-dir-jump-file)))
+
+    ;; Colorize hex code
+    (use-package rainbow-mode
+      :config
+      (rainbow-mode))
+
+    (use-package fireplace)
+
+    (use-package snow
+      :straight (snow :host github :repo "alphapapa/snow.el"))
+
+    (use-package helpful
+        :general
+        (:keymaps 'override
+                  :states '(normal insert emacs visual)
+                  "C-h f" #'helpful-callable
+                  "C-h v" #'helpful-variable
+                  "C-h k" #'helpful-key
+                  ;; "C-c C-d" #'helpful-at-point
+                  "C-h F" #'helpful-function
+                  "C-h C" #'helpful-command))
+
+    (use-package ace-link
       :general
-      (:keymaps 'override
-                :states '(normal insert emacs visual)
-                "C-h f" #'helpful-callable
-                "C-h v" #'helpful-variable
-                "C-h k" #'helpful-key
-                ;; "C-c C-d" #'helpful-at-point
-                "C-h F" #'helpful-function
-                "C-h C" #'helpful-command))
+      (:keymaps '(Info-mode-map
+                  help-mode-map
+                  woman-mode-map
+                  eww-mode-map
+                  compilation-mode-map
+                  helpful-mode-map
+                  org-mode-map
+                  elfeed-show-mode-map
+                  mu4e-view-mode-map)
+                :states 'normal
+                "F" 'ace-link))
 
-  (use-package ace-link
-    :general
-    (:keymaps '(Info-mode-map
-                help-mode-map
-                woman-mode-map
-                eww-mode-map
-                compilation-mode-map
-                helpful-mode-map
-                org-mode-map
-                elfeed-show-mode-map
-                mu4e-view-mode-map)
-              :states 'normal
-              "F" 'ace-link))
+    (use-package elisp-demos
+      :config
+      (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
 
-  (use-package elisp-demos
-    :config
-    (advice-add 'helpful-update :after #'elisp-demos-advice-helpful-update))
+    (use-package sicp)
 
-  (use-package sicp)
-
-  (use-package popper
-    :bind (("M-u"   . popper-toggle-latest)
-           ("M-U"   . popper-cycle)
-           ("M-C-U" . popper-toggle-type))
-    :init
-    (setq popper-reference-buffers
-          '("^\\*Messages\\*"
-            "^\\*cider"
-            "^\\*vterm\\*"
-            "^\\*skewer-repl\\*"
-            "[Oo]utput\\*"
-            "^\\*Compile-Log\\*"
-            "^\\*Backtrace\\*"
-            "^Calc:"
-            "^\\*ielm\\*"
-            "^\\*Completions\\*"
-            "^\\*Async Shekk Command\\*"
-            "^\\*Shell Command Output\\*"
-            "^\\*TeX Help\\*"
-            "^\\*Apropos"
-            "^\\*evil-registers\\*"
-            eshell-mode
-            helpful-mode
-            help-mode
-            compilation-mode
-            interactive-haskell-mode))
-    (defun my/popper-select-popup-at-bottom (buffer &optional _alist)
-      "Display and switch to popup-buffer BUFFER at the bottom of the screen."
-      (let ((window (display-buffer-in-side-window
-                     buffer
-                     '((window-height . (lambda (win)
-                                          (fit-window-to-buffer
-                                           win
-                                           (floor (frame-height) 3)
-                                           (floor (frame-height) 3))))
-                       (side . bottom)
-                       (slot . 1)))))
-        (select-window window)))
-    (setq popper-mode-line nil)
-    (setq popper-group-function #'popper-group-by-project)
-    ;; (setq popper-group-function #'popper-group-by-directory)
-    ;; (setq popper-group-function #'popper-group-by-project)
-    (setq popper-display-function #'my/popper-select-popup-at-bottom)
-    (popper-mode +1)
-    ;; (popper-echo-mode +1)
-  )
-
-  (use-package fold-this)
-
-  ;; Consult users will also want the embark-consult package.
-  (use-package embark-consult
-    :ensure t
-    :after (embark consult)
-    :demand t ; only necessary if you have the hook below
-    ;; if you want to have consult previews as you move around an
-    ;; auto-updating embark collect buffer
-    :hook
-    (embark-collect-mode . consult-preview-at-point-mode))
-
-  (use-package corfu
-    :disabled
-    :bind
-    (:map corfu-map
-          ("TAB" . corfu-next)
-          ([tab] . corfu-next)
-          ("S-TAB" . corfu-previous)
-          ([backtab] . corfu-previous)
-          ;; ("TAB" . corfu-insert)
-          ;; ([tab] . corfu-insert)
-          )
-    :custom
-    (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
-    ;; (corfu-auto t)                 ;; Enable auto completion
-    ;; (corfu-separator ?\s)          ;; Orderless field separator
-    ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-    ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-    ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
-    ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-    ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
-    ;; (corfu-scroll-margin 5)        ;; Use scroll margin
-
-    ;; You may want to enable Corfu only for certain modes.
-    ;; :hook ((prog-mode . corfu-mode)
-    ;;        (shell-mode . corfu-mode)
-    ;;        (eshell-mode . corfu-mode))
-
-    ;; Recommended: Enable Corfu globally.
-    ;; This is recommended since dabbrev can be used globally (M-/).
-    :init
-    ;; (setq corfu-auto t
-    ;;     corfu-quit-no-match 'separator) ;; or t
-    (corfu-global-mode))
-
-  (use-package cape
-    :disabled
-    :ensure t
-    ;; Bind dedicated completion commands
-    :bind (("C-c p p" . completion-at-point) ;; capf
-           ("C-c p t" . complete-tag)        ;; etags
-           ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-           ("C-c p f" . cape-file)
-           ("C-c p k" . cape-keyword)
-           ("C-c p s" . cape-symbol)
-           ("C-c p a" . cape-abbrev)
-           ("C-c p i" . cape-ispell)
-           ("C-c p l" . cape-line)
-           ("C-c p w" . cape-dict)
-           ("C-c p \\" . cape-tex)
-           ("M-l" . cape-tex)
-           ("C-c p _" . cape-tex)
-           ("C-c p ^" . cape-tex)
-           ("C-c p &" . cape-sgml)
-           ("C-c p r" . cape-rfc1345))
-    :init
-    ;; Add `completion-at-point-functions', used by `completion-at-point'.
-    (add-to-list 'completion-at-point-functions #'cape-file)
-    (add-to-list 'completion-at-point-functions #'cape-tex)
-    (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-    (add-to-list 'completion-at-point-functions #'cape-keyword)
-    ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-    ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
-    ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-    ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-    ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-    ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-    ;;(add-to-list 'completion-at-point-functions #'cape-line)
+    (use-package popper
+      :bind (("M-u"   . popper-toggle-latest)
+             ("M-U"   . popper-cycle)
+             ("M-C-U" . popper-toggle-type))
+      :init
+      (setq popper-reference-buffers
+            '("^\\*Messages\\*"
+              "^\\*cider"
+              "^\\*vterm\\*"
+              "^\\*skewer-repl\\*"
+              "[Oo]utput\\*"
+              "^\\*Compile-Log\\*"
+              "^\\*Backtrace\\*"
+              "^Calc:"
+              "^\\*ielm\\*"
+              "^\\*Completions\\*"
+              "^\\*Async Shekk Command\\*"
+              "^\\*Shell Command Output\\*"
+              "^\\*TeX Help\\*"
+              "^\\*Apropos"
+              "^\\*evil-registers\\*"
+              eshell-mode
+              helpful-mode
+              help-mode
+              compilation-mode
+              interactive-haskell-mode))
+      (defun my/popper-select-popup-at-bottom (buffer &optional _alist)
+        "Display and switch to popup-buffer BUFFER at the bottom of the screen."
+        (let ((window (display-buffer-in-side-window
+                       buffer
+                       '((window-height . (lambda (win)
+                                            (fit-window-to-buffer
+                                             win
+                                             (floor (frame-height) 3)
+                                             (floor (frame-height) 3))))
+                         (side . bottom)
+                         (slot . 1)))))
+          (select-window window)))
+      (setq popper-mode-line nil)
+      (setq popper-group-function #'popper-group-by-project)
+      ;; (setq popper-group-function #'popper-group-by-directory)
+      ;; (setq popper-group-function #'popper-group-by-project)
+      (setq popper-display-function #'my/popper-select-popup-at-bottom)
+      (popper-mode +1)
+      ;; (popper-echo-mode +1)
     )
 
-  (use-package company
-    :straight (:build (:not compile))
-    :config
-    (setq company-backends (append '((company-capf company-dabbrev-code))
+    (use-package fold-this)
 
-                                company-backends))
-    :hook
-    ((emacs-lisp-mode . company-mode)
-     (clojure-mode . company-mode)
-     (haskell-interactive-mode . company-mode)))
+    ;; Consult users will also want the embark-consult package.
+    (use-package embark-consult
+      :ensure t
+      :after (embark consult)
+      :demand t ; only necessary if you have the hook below
+      ;; if you want to have consult previews as you move around an
+      ;; auto-updating embark collect buffer
+      :hook
+      (embark-collect-mode . consult-preview-at-point-mode))
 
-  (use-package which-key
-    :config
-    (which-key-mode))
+    (use-package corfu
+      :disabled
+      :bind
+      (:map corfu-map
+            ("TAB" . corfu-next)
+            ([tab] . corfu-next)
+            ("S-TAB" . corfu-previous)
+            ([backtab] . corfu-previous)
+            ;; ("TAB" . corfu-insert)
+            ;; ([tab] . corfu-insert)
+            )
+      :custom
+      (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+      ;; (corfu-auto t)                 ;; Enable auto completion
+      ;; (corfu-separator ?\s)          ;; Orderless field separator
+      ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
+      ;; (corfu-preview-current nil)    ;; Disable current candidate preview
+      ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
+      ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+      ;; (corfu-echo-documentation nil) ;; Disable documentation in the echo area
+      ;; (corfu-scroll-margin 5)        ;; Use scroll margin
 
-  (use-package svg-lib)
+      ;; You may want to enable Corfu only for certain modes.
+      ;; :hook ((prog-mode . corfu-mode)
+      ;;        (shell-mode . corfu-mode)
+      ;;        (eshell-mode . corfu-mode))
 
-  (use-package kind-icon
-    :after corfu
-    :custom
-    (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
-    (kind-icon-use-icons nil)
-    :config
-    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
+      ;; Recommended: Enable Corfu globally.
+      ;; This is recommended since dabbrev can be used globally (M-/).
+      :init
+      ;; (setq corfu-auto t
+      ;;     corfu-quit-no-match 'separator) ;; or t
+      (corfu-global-mode))
 
-  (use-package unicode-math-input)
+    (use-package cape
+      :disabled
+      :ensure t
+      ;; Bind dedicated completion commands
+      :bind (("C-c p p" . completion-at-point) ;; capf
+             ("C-c p t" . complete-tag)        ;; etags
+             ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+             ("C-c p f" . cape-file)
+             ("C-c p k" . cape-keyword)
+             ("C-c p s" . cape-symbol)
+             ("C-c p a" . cape-abbrev)
+             ("C-c p i" . cape-ispell)
+             ("C-c p l" . cape-line)
+             ("C-c p w" . cape-dict)
+             ("C-c p \\" . cape-tex)
+             ("M-l" . cape-tex)
+             ("C-c p _" . cape-tex)
+             ("C-c p ^" . cape-tex)
+             ("C-c p &" . cape-sgml)
+             ("C-c p r" . cape-rfc1345))
+      :init
+      ;; Add `completion-at-point-functions', used by `completion-at-point'.
+      (add-to-list 'completion-at-point-functions #'cape-file)
+      (add-to-list 'completion-at-point-functions #'cape-tex)
+      (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+      (add-to-list 'completion-at-point-functions #'cape-keyword)
+      ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+      ;;(add-to-list 'completion-at-point-functions #'cape-rfc1345)
+      ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+      ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+      ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+      ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+      ;;(add-to-list 'completion-at-point-functions #'cape-line)
+      )
 
-  (use-package ligature
-    :straight (:host github :repo "mickeynp/ligature.el")
-    :config
-    ;; Enable the "www" ligature in every possible major mode
-    (ligature-set-ligatures 't '("www"))
-    ;; Enable traditional ligature support in eww-mode, if the
-    ;; `variable-pitch' face supports it
-    (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
-    ;; Enable all Cascadia Code ligatures in programming modes
-    (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
-                                         ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
-                                         "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
-                                         "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
-                                         "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
-                                         "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
-                                         "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
-                                         "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
-                                         ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
-                                         "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
-                                         "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
-                                         "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
-                                         "\\\\" "://"))
-    ;; Enables ligature checks globally in all buffers. You can also do it
-    ;; per mode with `ligature-mode'.
-    (global-ligature-mode t))
+    (use-package company
+      :straight (:build (:not compile))
+      :config
+      (setq company-backends (append '((company-capf company-dabbrev-code))
 
-  (use-package emacs
-    :hook
-    (clojure-mode . prettify-symbol-mode)
-    (emacs-lisp-mode . prettify-symbol-mode))
+                                  company-backends))
+      :hook
+      ((emacs-lisp-mode . company-mode)
+       (clojure-mode . company-mode)
+       (haskell-interactive-mode . company-mode)))
 
-  (use-package persistent-scratch
-    :config
-    (persistent-scratch-setup-default))
+    (use-package which-key
+      :config
+      (which-key-mode))
 
-  (use-package lispy
-    :disabled
-    :hook
-    ((emacs-lisp-mode . lispy-mode)
-     (clojure-mode . lispy-mode)
-     (lisp-mode . lispy-mode))
-    :init
-    (setq lispy-compat '(edebbug cider magit-blame-mode)))
+    (use-package svg-lib)
 
-  (use-package paredit
-    :bind
-    (("M-[" . 'paredit-wrap-square)
-     ("M-{" . 'paredit-wrap-curly)) 
-    :hook
-    ((emacs-lisp-mode . paredit-mode)
-     (clojure-mode . paredit-mode)
-     (clojurescript-mode . paredit-mode)
-     (lisp-mode . paredit-mode)))
+    (use-package kind-icon
+      :after corfu
+      :custom
+      (kind-icon-default-face 'corfu-default) ; to compute blended backgrounds correctly
+      (kind-icon-use-icons nil)
+      :config
+      (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter))
 
-  (use-package evil-goggles
-    :ensure t
-    :config
-    (evil-goggles-mode)
+    (use-package unicode-math-input)
 
-    ;; optionally use diff-mode's faces; as a result, deleted text
-    ;; will be highlighed with `diff-removed` face which is typically
-    ;; some red color (as defined by the color theme)
-    ;; other faces such as `diff-added` will be used for other actions
-    (evil-goggles-use-diff-faces))
+    (use-package ligature
+      :straight (:host github :repo "mickeynp/ligature.el")
+      :config
+      ;; Enable the "www" ligature in every possible major mode
+      (ligature-set-ligatures 't '("www"))
+      ;; Enable traditional ligature support in eww-mode, if the
+      ;; `variable-pitch' face supports it
+      (ligature-set-ligatures 'eww-mode '("ff" "fi" "ffi"))
+      ;; Enable all Cascadia Code ligatures in programming modes
+      (ligature-set-ligatures 'prog-mode '("|||>" "<|||" "<==>" "<!--" "####" "~~>" "***" "||=" "||>"
+                                           ":::" "::=" "=:=" "===" "==>" "=!=" "=>>" "=<<" "=/=" "!=="
+                                           "!!." ">=>" ">>=" ">>>" ">>-" ">->" "->>" "-->" "---" "-<<"
+                                           "<~~" "<~>" "<*>" "<||" "<|>" "<$>" "<==" "<=>" "<=<" "<->"
+                                           "<--" "<-<" "<<=" "<<-" "<<<" "<+>" "</>" "###" "#_(" "..<"
+                                           "..." "+++" "/==" "///" "_|_" "www" "&&" "^=" "~~" "~@" "~="
+                                           "~>" "~-" "**" "*>" "*/" "||" "|}" "|]" "|=" "|>" "|-" "{|"
+                                           "[|" "]#" "::" ":=" ":>" ":<" "$>" "==" "=>" "!=" "!!" ">:"
+                                           ">=" ">>" ">-" "-~" "-|" "->" "--" "-<" "<~" "<*" "<|" "<:"
+                                           "<$" "<=" "<>" "<-" "<<" "<+" "</" "#{" "#[" "#:" "#=" "#!"
+                                           "##" "#(" "#?" "#_" "%%" ".=" ".-" ".." ".?" "+>" "++" "?:"
+                                           "?=" "?." "??" ";;" "/*" "/=" "/>" "//" "__" "~~" "(*" "*)"
+                                           "\\\\" "://"))
+      ;; Enables ligature checks globally in all buffers. You can also do it
+      ;; per mode with `ligature-mode'.
+      (global-ligature-mode t))
 
-  (use-package tldr)
+    (use-package emacs
+      :hook
+      (clojure-mode . prettify-symbol-mode)
+      (emacs-lisp-mode . prettify-symbol-mode))
 
-  (use-package alda-mode)
+    (use-package persistent-scratch
+      :config
+      (persistent-scratch-setup-default))
+
+    (use-package lispy
+      :disabled
+      :hook
+      ((emacs-lisp-mode . lispy-mode)
+       (clojure-mode . lispy-mode)
+       (lisp-mode . lispy-mode))
+      :init
+      (setq lispy-compat '(edebbug cider magit-blame-mode)))
+
+    (use-package paredit
+      :bind
+      (("M-[" . 'paredit-wrap-square)
+       ("M-{" . 'paredit-wrap-curly)) 
+      :hook
+      ((emacs-lisp-mode . paredit-mode)
+       (clojure-mode . paredit-mode)
+       (clojurescript-mode . paredit-mode)
+       (lisp-mode . paredit-mode)))
+
+    (use-package evil-goggles
+      :ensure t
+      :config
+      (evil-goggles-mode)
+
+      ;; optionally use diff-mode's faces; as a result, deleted text
+      ;; will be highlighed with `diff-removed` face which is typically
+      ;; some red color (as defined by the color theme)
+      ;; other faces such as `diff-added` will be used for other actions
+      (evil-goggles-use-diff-faces))
+
+    (use-package tldr)
+
+    (use-package alda-mode)
 #+end_src
 * Custom Functions
 
